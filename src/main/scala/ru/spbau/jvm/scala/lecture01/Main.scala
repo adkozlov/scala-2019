@@ -1,4 +1,4 @@
-package ru.spbau.jvm.scala
+package ru.spbau.jvm.scala.lecture01
 
 object Main {
 

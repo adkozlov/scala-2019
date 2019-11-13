@@ -1,4 +1,4 @@
-package ru.spbau.jvm.scala
+package ru.spbau.jvm.scala.lecture01
 
 final class Bar(myFoo: Int) extends Foo {
 
