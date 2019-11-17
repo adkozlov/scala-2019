@@ -32,11 +32,11 @@ object PhonebookSchema {
   lazy val users = TableQuery[User]
   lazy val numbers = TableQuery[PhoneNumber]
   lazy val calls = TableQuery[Call]
-
 }
 
 object PhonebookQueries {
   import PhonebookSchema._
 
   def selectAllUsers = users.map(p => (p.id, p.name, p.number_id))
+
 }

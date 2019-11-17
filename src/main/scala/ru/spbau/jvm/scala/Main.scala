@@ -11,7 +11,7 @@ import scala.concurrent.duration.Duration
 object Main {
   val tablesDirPath: Path = FileSystems.getDefault.getPath("resources")
 
-  println(PhonebookSchema.calls.schema.toString)
+  PhonebookSchema.calls.schema.create.statements.foreach(println)
 
   def main(args: Array[String]): Unit = {
     println("Loading")
