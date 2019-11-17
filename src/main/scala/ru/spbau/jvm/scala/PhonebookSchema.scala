@@ -32,6 +32,12 @@ object PhonebookSchema {
   lazy val users = TableQuery[User]
   lazy val numbers = TableQuery[PhoneNumber]
   lazy val calls = TableQuery[Call]
+
+  final val tablesAndFiles = Seq(
+    (PhonebookSchema.users.schema.create, "User"),
+    (PhonebookSchema.numbers.schema.create, "Number"),
+    (PhonebookSchema.calls.schema.create, "Call")
+  )
 }
 
 object PhonebookQueries {

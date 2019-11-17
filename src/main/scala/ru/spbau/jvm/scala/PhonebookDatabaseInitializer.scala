@@ -3,6 +3,7 @@ package ru.spbau.jvm.scala
 import java.io.{File, OutputStreamWriter}
 import java.nio.file.Path
 
+import ru.spbau.jvm.scala.PhonebookSchema.tablesAndFiles
 import slick.jdbc.SQLiteProfile.api._
 
 import scala.concurrent.Await
@@ -10,37 +11,55 @@ import scala.concurrent.duration.Duration
 
 
 object PhonebookDatabaseInitializer {
+
   def getPhonebookDatabase(tablesDirectory: Path): PhonebookQueryRunner = {
+    val tempDBFile = createDatabaseFile()
+    val db = connectDatabase(tempDBFile)
+
+    createDatabaseSchema(db)
+    fillDatabase(tablesDirectory, tempDBFile)
+
+    new PhonebookQueryRunner(db)
+  }
+
+  private def createDatabaseFile(): String = {
     val tempFile = File.createTempFile("phonebook", ".db").getAbsoluteFile
     tempFile.deleteOnExit()
-
-    val db = connectDatabase(tempFile.getPath)
-
-    Await.result(db.run(DBIO.seq(
-      PhonebookSchema.numbers.schema.create,
-      PhonebookSchema.users.schema.create,
-      PhonebookSchema.calls.schema.create
-    )), Duration.Inf)
-
-    val qr = new PhonebookQueryRunner(db)
-
-    val process = Runtime.getRuntime.exec(s"sqlite3 ${tempFile.getPath}")
-    val writer = new OutputStreamWriter(process.getOutputStream)
-    writer.write(s"""
-         |.mode csv
-         |.import ${tablesDirectory.resolve("User.txt")} User
-         |.import ${tablesDirectory.resolve("Number.txt")} Number
-         |.import ${tablesDirectory.resolve("Call.txt")} Call
-    """.stripMargin)
-    writer.close()
-    process.waitFor()
-
-    qr
+    tempFile.getPath
   }
 
   private def connectDatabase(databaseFilePath: String): Database = {
     val url = s"jdbc:sqlite:file:$databaseFilePath"
     Database.forURL(url)
+  }
+
+  private def createDatabaseSchema(db: Database): Unit = {
+    import PhonebookSchema.tablesAndFiles
+
+    Await.result(db.run(DBIO.seq(
+      tablesAndFiles.map(_._1):_*
+    )), Duration.Inf)
+  }
+
+  private def fillDatabase(tablesDirectory: Path, tempDBFile: String): Unit = {
+    val process = Runtime.getRuntime.exec(s"sqlite3 $tempDBFile")
+    val writer = new OutputStreamWriter(process.getOutputStream)
+
+    val importLines = tablesAndFiles.map(_._2).map(p => s".import ${tablesDirectory.resolve(s"$p.txt")} $p")
+    writer.write(".mode csv\n")
+    writer.write(importLines.mkString("\n"))
+    writer.close()
+    process.waitFor()
+
+    // copying stream to a string with scanner
+    val s = new java.util.Scanner(process.getInputStream).useDelimiter("\\A")
+    val errors = if (s.hasNext()) s.next() else ""
+
+    if (!errors.isEmpty) {
+      println("Errors while loading tables:")
+      println(errors)
+      println("Proceeding anyway")
+    }
   }
 }
 

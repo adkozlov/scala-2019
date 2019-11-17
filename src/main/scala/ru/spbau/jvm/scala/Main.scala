@@ -2,16 +2,8 @@ package ru.spbau.jvm.scala
 
 import java.nio.file.{FileSystems, Path}
 
-import ru.spbau.jvm.scala.PhonebookSchema._
-import slick.jdbc.SQLiteProfile.api._
-
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-
 object Main {
   val tablesDirPath: Path = FileSystems.getDefault.getPath("resources")
-
-  PhonebookSchema.calls.schema.create.statements.foreach(println)
 
   def main(args: Array[String]): Unit = {
     println("Loading")
