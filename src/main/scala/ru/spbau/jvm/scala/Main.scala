@@ -1,7 +1,8 @@
 package ru.spbau.jvm.scala
 
-import slick.jdbc.SQLiteProfile.api._
 import java.nio.file.{FileSystems, Path}
+
+import slick.jdbc.SQLiteProfile.api._
 
 object Main {
   val tablesDirPath: Path = FileSystems.getDefault.getPath("resources")
@@ -14,15 +15,23 @@ object Main {
     import PhonebookSchema._
     tablesAndFiles.foreach(_._1.statements.foreach(println))
 
+    import java.time.LocalDate
+
     import PhonebookQueries._
+
+    val localDate: LocalDate = LocalDate.parse("2019-11-10")
 
     for (_ <- 1 to 1)
     {
-      val q = qr.database.run(calls.map(p => p.user_id).result)
-//      val tRes = qr.getQueryResult(selectAllUsers)
-      val tRes = qr.getQueryResult(calls.map(p => (p.user_id, p.callee, p.datetime)))
+//      val dt = LocalDateTime.of(2019, 10, 15, 0, 1)
+
+      val tRes = qr.run(userNumberQuery2("Kolyan", "The Great").result)
       println(tRes)
     }
+
+    userNumberJoin.result.statements.foreach(println)
   }
 
+//  Instant.parse("2019-12-12")
+//  LocalDateTime.ofInstant(Instant.now, ZoneOffset.UTC).compareTo(java.time.LocalDate.of(2019, 11, 17))
 }

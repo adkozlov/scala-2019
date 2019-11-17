@@ -4,7 +4,10 @@ import java.io.{File, OutputStreamWriter}
 import java.nio.file.Path
 
 import ru.spbau.jvm.scala.PhonebookSchema.tablesAndFiles
+import slick.dbio.{Effect, NoStream}
+import slick.jdbc.SQLiteProfile
 import slick.jdbc.SQLiteProfile.api._
+import slick.jdbc.JdbcActionComponent
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -66,6 +69,6 @@ object PhonebookDatabaseInitializer {
 }
 
 class PhonebookQueryRunner(val database: Database) {
-  def run[R](query: Query[_, R, Seq]) = database.run(query.result)
-  def getQueryResult[R, S](query: Query[_, R, Seq]) = Await.result(run(query), Duration.Inf)
+  def getQueryResult[R, S](query: Query[_, R, Seq]) = Await.result(database.run(query.result), Duration.Inf)
+  def run[R](action: DBIOAction[R, NoStream, Nothing]) = Await.result(database.run(action), Duration.Inf)
 }

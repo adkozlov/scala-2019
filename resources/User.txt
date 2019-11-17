@@ -1,3 +1,4 @@
 0,Ivanov,Ivan,0
 1,Uno,Unov,1
 2,Rat,Geravker,1
+6,Kolyan,The Great,10

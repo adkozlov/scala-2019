@@ -1,5 +1,7 @@
 package ru.spbau.jvm.scala
 
+import java.time.{Instant, LocalDateTime}
+
 import slick.jdbc.SQLiteProfile.api._
 
 
@@ -11,6 +13,7 @@ object PhonebookSchema {
     def number_id = column[Int]("number_id")
 
     override def * = (id, name, surname, number_id)
+    def number = foreignKey("number_fk", number_id, numbers)(_.id)
   }
 
   class PhoneNumber(tag: Tag) extends Table[(Int, String)](tag, "Number") {
@@ -19,13 +22,15 @@ object PhonebookSchema {
     override def * = (id, number)
   }
 
-  class Call(tag: Tag) extends Table[(Int, String, Int, Int, java.time.LocalDateTime)](tag, "Call") {
+  class Call(tag: Tag) extends Table[(Int, String, Int, Int, String)](tag, "Call") {
     def user_id = column[Int]("user_id")
     def callee = column[String]("callee")
     def time = column[Int]("time_s")
     def cost = column[Int]("cost")
-    def datetime = column[java.time.LocalDateTime]("datetime")
+    def datetime = column[String]("datetime")
     override def * = (user_id, callee, time, cost, datetime)
+
+    def user = foreignKey("user_fk", user_id, users)(_.id)
   }
 
   lazy val users = TableQuery[User]
@@ -33,15 +38,8 @@ object PhonebookSchema {
   lazy val calls = TableQuery[Call]
 
   final val tablesAndFiles = Seq(
-    (users.schema.create, "User"),
     (numbers.schema.create, "Number"),
+    (users.schema.create, "User"),
     (calls.schema.create, "Call")
   )
-}
-
-object PhonebookQueries {
-  import PhonebookSchema._
-
-  def selectAllUsers = users.map(p => (p.id, p.name, p.number_id))
-
 }
