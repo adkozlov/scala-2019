@@ -21,8 +21,17 @@ object PhonebookSchema {
     override def * = (id, number)
   }
 
+  class Call(tag: Tag) extends Table[(Int, String, Int, Int)](tag, "Call") {
+    def user_id = column[Int]("user_id")
+    def callee = column[String]("callee")
+    def time = column[Int]("time_s")
+    def cost = column[Int]("cost")
+    override def * = (user_id, callee, time, cost)
+  }
+
   lazy val users = TableQuery[User]
   lazy val numbers = TableQuery[PhoneNumber]
+  lazy val calls = TableQuery[Call]
 
 }
 

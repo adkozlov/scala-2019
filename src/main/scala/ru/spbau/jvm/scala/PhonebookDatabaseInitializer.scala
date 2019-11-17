@@ -29,8 +29,15 @@ object PhonebookDatabaseInitializer {
          |    number_id INTEGER NOT NULL REFERENCES Number,
          |    UNIQUE(name, surname)
          |  );
+         | create table Call (
+         |    user_id INTEGER NOT NULL REFERENCES User,
+         |    callee TEXT NOT NULL,
+         |    duration_s INT NOT NULL,
+         |    cost_c INT NOT NULL
+         |  );
          |.import ${tablesDirectory.resolve("User.txt")} User
          |.import ${tablesDirectory.resolve("Number.txt")} Number
+         |.import ${tablesDirectory.resolve("Call.txt")} Call
     """.stripMargin)
     writer.close()
     process.waitFor()

@@ -11,6 +11,8 @@ import scala.concurrent.duration.Duration
 object Main {
   val tablesDirPath: Path = FileSystems.getDefault.getPath("resources")
 
+  println(PhonebookSchema.calls.schema.toString)
+
   def main(args: Array[String]): Unit = {
     println("Loading")
     val qr = PhonebookDatabaseInitializer.getPhonebookDatabase(tablesDirPath)
@@ -24,4 +26,5 @@ object Main {
       println(tRes)
     }
   }
+
 }
