@@ -1,130 +1,78 @@
 package ru.spbau.jvm.scala
 
-import java.io.{BufferedReader, File, InputStreamReader, OutputStreamWriter}
-import java.nio.file.FileSystems
-import java.sql.DriverManager
-import java.util.stream.Collectors
+import java.io.{File, OutputStreamWriter}
+import java.nio.file.{FileSystems, Path}
 
-import org.squeryl.PrimitiveTypeMode
-import org.squeryl.adapters.SQLiteAdapter
-import org.squeryl.{KeyedEntity, Schema, Session, SessionFactory}
+import slick.jdbc.SQLiteProfile.api._
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
-//case class Bar(name: Option[String]) extends KeyedEntity[Long] {
-//  val id: Long = 0
-//}
+object Tables {
+  class User(tag: Tag) extends Table[(Int, String, String, Int)](tag, "User") {
+    def id = column[Int]("id")
+    def name = column[String]("name")
+    def surname = column[String]("surname")
+    def number_id = column[Int]("number_id")
 
-object PrimitiveType extends PrimitiveTypeMode
+    override def * = (id, name, surname, number_id)
+  }
 
-import ru.spbau.jvm.scala.PrimitiveType._
+  class PhoneNumber(tag: Tag) extends Table[(Int, String)](tag, "Number") {
+    def id = column[Int]("id")
+    def number = column[String]("number")
+    override def * = (id, number)
+  }
 
-//object AppDB extends Schema {
-//  val barTable = table[Bar]("bar")
-//}
-
-class User(
-            val id: Int,
-            val name: String,
-            val surname: String,
-            val number_id: Int
-          ) extends KeyedEntity[Int]
-
-class PhoneNumber(
-                   val id: Int,
-                   val number: String
-                 ) extends KeyedEntity[Int]
-
-object BillingSystem extends Schema {
-  val user = table[User]("User")
-  val number = table[PhoneNumber]("Number")
+  lazy val users = TableQuery[User]
+  lazy val numbers = TableQuery[PhoneNumber]
 }
 
-object Main1 {
+import ru.spbau.jvm.scala.Tables._
+
+object Main {
+  val tablesFolderPath: Path = FileSystems.getDefault.getPath("resources")
   val sqliteInit: String =
     s"""
-      |.mode csv
-      |create table User (
-      |    id INTEGER not null primary key autoincrement,
-      |    name varchar(128) not null,
-      |    surname varchar(128) not null,
-      |    number_id INTEGER not null
-      |  );
-      |create table Number (
-      |    id INTEGER not null primary key,
-      |    number varchar(128) not null
-      |  );
-      |.import ${FileSystems.getDefault.getPath("resources").resolve("User.txt")} User
-      |.import ${FileSystems.getDefault.getPath("resources").resolve("Number.txt")} Number
+       |.mode csv
+       |create table User (
+       |    id INTEGER not null primary key autoincrement,
+       |    name varchar(128) not null,
+       |    surname varchar(128) not null,
+       |    number_id INTEGER not null
+       |  );
+       |create table Number (
+       |    id INTEGER not null primary key,
+       |    number varchar(128) not null
+       |  );
+       |.import ${tablesFolderPath.resolve("User.txt")} User
+       |.import ${tablesFolderPath.resolve("Number.txt")} Number
     """.stripMargin
 
-  def initDatabase(databaseFilePath: String): Unit = {
-    val process = Runtime.getRuntime.exec(s"sqlite3 $databaseFilePath")
+  def initDatabase(): String = {
+    val tempFile = File.createTempFile("phonebook", ".db").getAbsoluteFile
+    tempFile.deleteOnExit()
+
+    val process = Runtime.getRuntime.exec(s"sqlite3 ${tempFile.getPath}")
     val writer = new OutputStreamWriter(process.getOutputStream)
     writer.write(sqliteInit)
     writer.close()
     process.waitFor()
+
+    tempFile.getPath
   }
 
-  def connect(databaseFilePath: String) = {
+  def getDatabase(databaseFilePath: String): Database = {
     val url = s"jdbc:sqlite:file:$databaseFilePath"
-    DriverManager.getConnection(url)
+    Database.forURL(url)
   }
 
   def main(args: Array[String]): Unit = {
-    val tempFile = File.createTempFile("phonebook", ".db").getAbsoluteFile
-    tempFile.deleteOnExit()
-    println(s"temp file name:${tempFile.getPath}")
+    val db = getDatabase(initDatabase())
 
+    val query = users.map(p => (p.id,p.name,p.number_id))
 
-    val conn = connect(tempFile.getPath)
-    initDatabase(tempFile.getPath)
-
-    SessionFactory.concreteFactory = Some(()=>
-      Session.create(
-        conn,
-        new SQLiteAdapter)
-    )
-
-
-    inTransaction {
-      import BillingSystem._
-      printDdl
-
-      val q = from(user)(s =>
-        where(s.id gt 0)
-          select s
-      )
-
-      for (x <- q) {
-        println(x.id, x.name, x.surname)
-      }
-
-      println("QEQ")
-    }
-
-    val reader = new BufferedReader(new InputStreamReader(System.in))
-    var query = "q"
-    while (query != "q") {
-      query = reader.readLine()
-      try {
-        val res = conn.prepareStatement(query).executeQuery()
-        val rsmd = res.getMetaData
-        while (res.next) {
-          var i = 0
-          for (i <- 1 to rsmd.getColumnCount) {
-            if (i > 1) System.out.print(",  ")
-            val columnValue = res.getString(i)
-            System.out.print(s"$columnValue :${rsmd.getColumnName(i)}")
-          }
-          System.out.println("")
-        }
-      } catch {
-        case e: Exception => System.out.println(e)
-      }
-
-    }
-//
-//    conn.close()
+    val tRes = Await.result(db.run(query.result), Duration.Inf)
+    println(tRes)
   }
 }
-
