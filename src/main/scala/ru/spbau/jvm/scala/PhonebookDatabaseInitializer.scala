@@ -5,9 +5,12 @@ import java.nio.file.Path
 
 import slick.jdbc.SQLiteProfile.api._
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
 
 object PhonebookDatabaseInitializer {
-  def getPhonebookDatabase(tablesDirectory: Path): Database = {
+  def getPhonebookDatabase(tablesDirectory: Path): PhonebookQueryRunner = {
     val tempFile = File.createTempFile("phonebook", ".db").getAbsoluteFile
     tempFile.deleteOnExit()
 
@@ -32,11 +35,16 @@ object PhonebookDatabaseInitializer {
     writer.close()
     process.waitFor()
 
-    connectDatabase(tempFile.getPath)
+    new PhonebookQueryRunner(connectDatabase(tempFile.getPath))
   }
 
   private def connectDatabase(databaseFilePath: String): Database = {
     val url = s"jdbc:sqlite:file:$databaseFilePath"
     Database.forURL(url)
   }
+}
+
+class PhonebookQueryRunner(database: Database) {
+  def run[R](query: Query[_, R, Seq]) = database.run(query.result)
+  def getQueryResult[R](query: Query[_, R, Seq]) = Await.result(run(query), Duration.Inf)
 }

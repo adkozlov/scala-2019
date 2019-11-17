@@ -13,14 +13,14 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     println("Loading")
-    val db = PhonebookDatabaseInitializer.getPhonebookDatabase(tablesDirPath)
+    val qr = PhonebookDatabaseInitializer.getPhonebookDatabase(tablesDirPath)
     println("Ready for use!")
 
+    import PhonebookQueries._
 
     for (_ <- 1 to 10)
     {
-      val pb = new PhonebookQueries(db)
-      val tRes = pb.getQueryResult(selectAllUsers)
+      val tRes = qr.getQueryResult(selectAllUsers)
       println(tRes)
     }
   }

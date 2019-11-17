@@ -31,7 +31,3 @@ object PhonebookQueries {
 
   def selectAllUsers = users.map(p => (p.id, p.name, p.number_id))
 }
-
-class PhonebookQueryRunner(database: Database) {
-  def getQueryResult[R](query: Query[_, R, Seq]) = Await.result(database.run(query.result), Duration.Inf)
-}
