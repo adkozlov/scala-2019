@@ -11,7 +11,7 @@ object PhonebookQueries {
 
   def callsFromTo(from: LocalDateTime, to: LocalDateTime = LocalDateTime.now()) =
     calls.filter(
-      c => c.datetime > dateTimeToString(from)
+      c => c.datetime >= dateTimeToString(from)
         && c.datetime < dateTimeToString(to)
     )
 

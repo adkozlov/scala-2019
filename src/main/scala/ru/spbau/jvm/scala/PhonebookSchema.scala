@@ -1,7 +1,5 @@
 package ru.spbau.jvm.scala
 
-import java.time.{Instant, LocalDateTime}
-
 import slick.jdbc.SQLiteProfile.api._
 
 

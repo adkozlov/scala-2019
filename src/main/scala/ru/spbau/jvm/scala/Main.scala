@@ -1,43 +1,26 @@
 package ru.spbau.jvm.scala
 
 import java.nio.file.{FileSystems, Path}
-
-import slick.jdbc.SQLiteProfile.api._
+import java.time.{DateTimeException, LocalDate, LocalDateTime}
+import java.time.format.{DateTimeFormatter, DateTimeParseException}
 
 import scala.io.StdIn.readLine
+import scala.util.matching.Regex
 
 // TODO optimize imports
 // TODO remove comments
 // TODO foreign keys?
 // TODO unused queries
 // TODO TODOs
+// TODO make sure every command is implemented
+// TODO tests
 
 object Main {
   private val tablesDirPath: Path = FileSystems.getDefault.getPath("resources")
 
   def main(args: Array[String]): Unit = {
-    val qr = PhonebookDatabaseInitializer.getPhonebookDatabase(tablesDirPath)
-
-//    import PhonebookSchema._ // TODO remove
-//    tablesAndFiles.foreach(_._1.statements.foreach(println)) // TODO remove
-
+//    println(parseDate("  dsda kek 2020-10-10T12:16:23 dlkajslka", "kek"))
     mainLoop()
-
-    import java.time.LocalDate
-
-    import PhonebookQueries._
-
-    val localDate: LocalDate = LocalDate.parse("2019-11-10")
-
-    for (_ <- 1 to 1)
-    {
-//      val dt = LocalDateTime.of(2019, 10, 15, 0, 1)
-
-      val tRes = qr.run(userNumberQuery2("Kolyan", "The Great").result)
-      println(tRes)
-    }
-
-    userNumberJoin.result.statements.foreach(println)
   }
 
   def mainLoop(): Unit = {
@@ -47,7 +30,6 @@ object Main {
 
     var exitFlag = false
     while (!exitFlag) {
-
       val cmd = readLine
       cmd match {
         case "help" => help()
@@ -56,6 +38,7 @@ object Main {
         case numberRegexp(c) => dealNumber(c)
         case callsRegexp(c) => dealCalls(c)
         case avgRegexp(c) => dealAvg(c)
+        case "schema" => printSchema()
         case _ => invalidResponse(_)
       }
     }
@@ -63,6 +46,11 @@ object Main {
 
   def dealNumber(c: String): Unit = {
 
+  }
+
+  def printSchema(): Unit = {
+    import PhonebookSchema._
+    tablesAndFiles.foreach(_._1.statements.foreach(println))
   }
 
   def help(): Unit = {
@@ -94,5 +82,32 @@ object Main {
 
   def invalidResponse(command: String): Unit = {
     println(s"command '$command' not found")
+  }
+
+  private def parseDates(command: String): (Option[LocalDateTime], Option[LocalDateTime]) = {
+    (parseDate(command, "from"), parseDate(command, "to", d => d.plusDays(1)))
+  }
+
+  def afterMatch(s: String, regex: Regex): Option[String] = regex.findFirstMatchIn(s).map(regexpMatch => s.substring(regexpMatch.end))
+
+  def parseDate(str: String, prefix: String, modifyDate: LocalDateTime => LocalDateTime = identity): Option[LocalDateTime] = {
+    val prefixR = s"$prefix ".r
+    val space = "[\\s]*".r
+    val notSpace = "[^\\s]*".r
+    afterMatch(str, prefixR) flatMap (afterMatch(_, space)) flatMap (notSpace.findFirstIn(_)) flatMap (s =>
+      (
+        try {
+          Option(LocalDateTime.parse(s))
+        } catch {
+          case _: DateTimeParseException => Option.empty[LocalDateTime]
+        }
+        ).orElse(
+        try {
+          Option(modifyDate(LocalDate.parse(s).atTime(0, 0)))
+        } catch {
+          case _: DateTimeException => Option.empty[LocalDateTime]
+        }
+      )
+    )
   }
 }
