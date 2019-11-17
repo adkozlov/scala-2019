@@ -1,9 +1,12 @@
 package ru.spbau.jvm.scala
 
 //import slick.model.Table
+import java.io.{File, OutputStreamWriter}
+import java.nio.file.FileSystems
 import java.sql.DriverManager
 
-import slick.jdbc.H2Profile.api._
+import ru.spbau.jvm.scala.Main1.{connect, initDatabase}
+import slick.jdbc.SQLiteProfile.api._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -31,16 +34,46 @@ object Tables {
 
 import Tables._
 
-object Main1 {
+object Main {
+  val sqliteInit: String =
+    s"""
+       |.mode csv
+       |create table User (
+       |    id INTEGER not null primary key autoincrement,
+       |    name varchar(128) not null,
+       |    surname varchar(128) not null,
+       |    number_id INTEGER not null
+       |  );
+       |create table Number (
+       |    id INTEGER not null primary key,
+       |    number varchar(128) not null
+       |  );
+       |.import ${FileSystems.getDefault.getPath("resources").resolve("User.txt")} User
+       |.import ${FileSystems.getDefault.getPath("resources").resolve("Number.txt")} Number
+    """.stripMargin
+
+  def initDatabase(databaseFilePath: String): Unit = {
+    val process = Runtime.getRuntime.exec(s"sqlite3 $databaseFilePath")
+    val writer = new OutputStreamWriter(process.getOutputStream)
+    writer.write(sqliteInit)
+    writer.close()
+    process.waitFor()
+  }
+
+  def connect(databaseFilePath: String) = {
+    val url = s"jdbc:sqlite:file:$databaseFilePath"
+    DriverManager.getConnection(url)
+  }
 
   def main(args: Array[String]): Unit = {
-    //    val foo: Foo = Bar()
-    //    println(foo.foo)
-//    Class.forName("org.relique.jdbc.csv.CsvDriver")
-    val url = "jdbc:sqlite:memory:?cache=shared"
-//    val url = "jdbc:relique:csv:resources?" +
-//      "separator=," + "&" + "fileExtension=.txt"
-    val conn = DriverManager.getConnection(url)
+    val tempFile = File.createTempFile("phonebook", ".db").getAbsoluteFile
+    tempFile.deleteOnExit()
+    println(s"temp file name:${tempFile.getPath}")
+
+
+    val conn = connect(tempFile.getPath)
+    initDatabase(tempFile.getPath)
+    val url = s"jdbc:sqlite:file:${tempFile.getPath}"
 
     val db = Database.forURL(url)
 
@@ -53,6 +86,7 @@ object Main1 {
 val query = users.map(p => (p.id,p.name,p.number_id))
 
     val tRes = Await.result(db.run(query.result), Duration.Inf)
+    println(tRes)
 
 //    val sql =
 //    //#sqlQueryProjection*

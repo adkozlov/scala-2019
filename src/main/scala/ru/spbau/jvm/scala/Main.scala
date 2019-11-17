@@ -39,7 +39,7 @@ object BillingSystem extends Schema {
   val number = table[PhoneNumber]("Number")
 }
 
-object Main {
+object Main1 {
   val sqliteInit: String =
     s"""
       |.mode csv
