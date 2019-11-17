@@ -7,8 +7,7 @@ import slick.jdbc.SQLiteProfile.api._
 
 
 object PhonebookDatabaseInitializer {
-
-  def initDatabase(tablesDirectory: Path): Database = {
+  def getPhonebookDatabase(tablesDirectory: Path): Database = {
     val tempFile = File.createTempFile("phonebook", ".db").getAbsoluteFile
     tempFile.deleteOnExit()
 
@@ -16,15 +15,16 @@ object PhonebookDatabaseInitializer {
     val writer = new OutputStreamWriter(process.getOutputStream)
     writer.write(s"""
          |.mode csv
-         |create table User (
-         |    id INTEGER not null primary key autoincrement,
-         |    name varchar(128) not null,
-         |    surname varchar(128) not null,
-         |    number_id INTEGER not null
-         |  );
          |create table Number (
-         |    id INTEGER not null primary key,
-         |    number varchar(128) not null
+         |    id INTEGER NOT NULL PRIMARY KEY,
+         |    number TEXT NOT NULL
+         |  );
+         |create table User (
+         |    id INTEGER NOT NULL PRIMARY KEY,
+         |    name TEXT NOT NULL,
+         |    surname TEXT NOT NULL,
+         |    number_id INTEGER NOT NULL REFERENCES Number,
+         |    UNIQUE(name, surname)
          |  );
          |.import ${tablesDirectory.resolve("User.txt")} User
          |.import ${tablesDirectory.resolve("Number.txt")} Number
@@ -32,10 +32,10 @@ object PhonebookDatabaseInitializer {
     writer.close()
     process.waitFor()
 
-    getDatabase(tempFile.getPath)
+    connectDatabase(tempFile.getPath)
   }
 
-  private def getDatabase(databaseFilePath: String): Database = {
+  private def connectDatabase(databaseFilePath: String): Database = {
     val url = s"jdbc:sqlite:file:$databaseFilePath"
     Database.forURL(url)
   }
