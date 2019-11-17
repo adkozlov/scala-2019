@@ -2,8 +2,6 @@ package ru.spbau.jvm.scala
 
 import slick.jdbc.SQLiteProfile.api._
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 
 object PhonebookSchema {
   class User(tag: Tag) extends Table[(Int, String, String, Int)](tag, "User") {
@@ -21,12 +19,13 @@ object PhonebookSchema {
     override def * = (id, number)
   }
 
-  class Call(tag: Tag) extends Table[(Int, String, Int, Int)](tag, "Call") {
+  class Call(tag: Tag) extends Table[(Int, String, Int, Int, java.time.LocalDateTime)](tag, "Call") {
     def user_id = column[Int]("user_id")
     def callee = column[String]("callee")
     def time = column[Int]("time_s")
     def cost = column[Int]("cost")
-    override def * = (user_id, callee, time, cost)
+    def datetime = column[java.time.LocalDateTime]("datetime")
+    override def * = (user_id, callee, time, cost, datetime)
   }
 
   lazy val users = TableQuery[User]
@@ -34,9 +33,9 @@ object PhonebookSchema {
   lazy val calls = TableQuery[Call]
 
   final val tablesAndFiles = Seq(
-    (PhonebookSchema.users.schema.create, "User"),
-    (PhonebookSchema.numbers.schema.create, "Number"),
-    (PhonebookSchema.calls.schema.create, "Call")
+    (users.schema.create, "User"),
+    (numbers.schema.create, "Number"),
+    (calls.schema.create, "Call")
   )
 }
 

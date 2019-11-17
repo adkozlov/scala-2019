@@ -45,7 +45,9 @@ object PhonebookDatabaseInitializer {
     val process = Runtime.getRuntime.exec(s"sqlite3 $tempDBFile")
     val writer = new OutputStreamWriter(process.getOutputStream)
 
-    val importLines = tablesAndFiles.map(_._2).map(p => s".import ${tablesDirectory.resolve(s"$p.txt")} $p")
+    val importLines = tablesAndFiles.map(_._2).map(tableName => s".import ${tablesDirectory.resolve(s"$tableName.txt")} $tableName")
+    importLines.foreach(println)
+
     writer.write(".mode csv\n")
     writer.write(importLines.mkString("\n"))
     writer.close()
@@ -63,7 +65,7 @@ object PhonebookDatabaseInitializer {
   }
 }
 
-class PhonebookQueryRunner(database: Database) {
+class PhonebookQueryRunner(val database: Database) {
   def run[R](query: Query[_, R, Seq]) = database.run(query.result)
-  def getQueryResult[R](query: Query[_, R, Seq]) = Await.result(run(query), Duration.Inf)
+  def getQueryResult[R, S](query: Query[_, R, Seq]) = Await.result(run(query), Duration.Inf)
 }
