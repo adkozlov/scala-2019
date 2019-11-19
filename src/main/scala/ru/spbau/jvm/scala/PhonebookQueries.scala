@@ -9,16 +9,22 @@ object PhonebookQueries {
 
   def selectAllUsers = users.map(p => (p.id, p.name, p.number_id))
 
-  def callsFromTo(from: LocalDateTime, to: LocalDateTime = LocalDateTime.now()): Query[Call, (Int, String, Int, Int, String), Seq] =
+  def callsFromTo(from: LocalDateTime, to: LocalDateTime): Query[Call, (Int, String, Int, Int, String), Seq] =
     calls.filter(
       c => c.datetime >= dateTimeToString(from)
         && c.datetime < dateTimeToString(to)
     )
 
-  def costFromTo(from: LocalDateTime, to: LocalDateTime = LocalDateTime.now()): Rep[Option[Int]] =
+  def callsFromToWithUser(from: LocalDateTime, to: LocalDateTime): Query[(User, Call), ((Int, String, String, Int), (Int, String, Int, Int, String)), Seq] =
+    for {
+      call <- callsFromTo(from, to)
+      usr <- call.user
+    } yield (usr, call)
+
+  def costFromTo(from: LocalDateTime, to: LocalDateTime): Rep[Option[Int]] =
     callsFromTo(from, to).map(_.cost).sum
 
-  def avg = calls.map(_.cost).avg
+  def avg(from: LocalDateTime, to: LocalDateTime): Rep[Option[Int]] = callsFromTo(from, to).map(_.cost).avg
 
   def userNumberLeftJoin = users.joinLeft(numbers) on (_.number_id === _.id)
 

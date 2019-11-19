@@ -1,8 +1,8 @@
 package ru.spbau.jvm.scala
 
-import java.nio.file.{FileSystems, Path}
-import java.time.{DateTimeException, LocalDate, LocalDateTime}
+import java.nio.file.Path
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
+import java.time.{DateTimeException, LocalDate, LocalDateTime}
 
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
@@ -15,13 +15,19 @@ import scala.util.matching.Regex
 // TODO tests
 
 object Main {
+  private val tablesDirectory = "resources"
+  private val runner = PhonebookDatabaseInitializer.getPhonebookInterface(Path.of(tablesDirectory))
 
   def main(args: Array[String]): Unit = {
-//    println(parseDate("  dsda kek 2020-10-10T12:16:23 dlkajslka", "kek"))
     mainLoop()
   }
 
   def mainLoop(): Unit = {
+    val numberRegexp = "^[\\s]*number(.*)".r
+    val callsRegexp = "^[\\s]*calls(.*)".r
+    val avgRegexp = "^[\\s]*avg(.*)".r
+    val totalRegexp = "^[\\s]*total(.*)".r
+
     var exitFlag = false
     while (!exitFlag) {
       val cmd = readLine
@@ -32,14 +38,12 @@ object Main {
         case numberRegexp(c) => dealNumber(c)
         case callsRegexp(c) => dealCalls(c)
         case avgRegexp(c) => dealAvg(c)
+        case totalRegexp(c) => dealTotal(c)
         case "schema" => printSchema()
-        case _ => invalidResponse(_)
+        case "qwe" => println("qwe")
+        case other => invalidResponse(other)
       }
     }
-  }
-
-  def dealNumber(c: String): Unit = {
-
   }
 
   def printSchema(): Unit = {
@@ -52,10 +56,10 @@ object Main {
       ("q", ""),
       ("quit", "exit"),
       ("help", "displays this message"),
-      ("avg", "displays total average of calls costs"),
-      ("number NAME SURNAME", "displays number, assigned to employee with provided name"),
+      ("avg [from DATE] [to DATE]", "displays total average of calls costs"),
+      ("number NAME [SURNAME]", "displays number, assigned to employee with provided name"),
       ("calls [from DATE] [to DATE]", "displays calls in specified interval of time. By default dates are from -inf to inf"),
-      ("total [from DATE] [to DATE]", "displays total cost of calls in specified interval of time. By default dates are from -inf to inf")
+      ("total [from DATE] [to DATE]", "displays total cost of calls in specified interval of time. By default dates are from -inf to current moment")
     ) // TODO
     val commandLength = commandsList.map(_._1.length).max
 
@@ -64,22 +68,52 @@ object Main {
       //noinspection ScalaMalformedFormatString
       printf(s"%${-commandLength}s %s\n", command, description)
     }
+    println()
+    println("Date format is YYYY-MM-DD[Thh:mm[:ss[.millis]]] where T is an actual letter")
+  }
+
+  def dealNumber(str: String): Unit = {
+    val nameSurnameRegex = "([^\\s]+)[\\s]*([^\\s]*)[\\s]*".r
+    str match {
+      case nameSurnameRegex(name, surname) => runner.getUserNumbers(name, surname).foreach(println)
+      case _ => println("Please specify name [and surname] each in one word")
+    }
+  }
+
+  def dealTotal(str: String): Unit = {
+    val dates = parseDates(str)
+    println(s"Total call cost ${niceDatesPeriod(dates)}")
+    println(runner.getTotal(dates._1, dates._2)
+      .map(niceCost)
+      .getOrElse("No calls in that period")
+    )
   }
 
   def dealCalls(str: String): Unit = {
-
+    val dates = parseDates(str)
+    println(s"Calls ${niceDatesPeriod(dates)}")
+    println("FirstName | LastName | Callee | Duration (s) | Cost ($) | Time")
+    runner.getCalls(dates._1, dates._2).foreach {
+      case ((_, name, surname, _), (_, callee, time, cost, datetime)) =>
+        println(s"$name | $surname | $callee | $time | ${niceCost(cost)} | $datetime")
+    }
   }
 
   def dealAvg(str: String): Unit = {
-
+    val dates = parseDates(str)
+    println(s"Average call cost ${niceDatesPeriod(dates)}")
+    println(runner.getAvg(dates._1, dates._2)
+      .map(niceCost)
+      .getOrElse("No calls in that period")
+    )
   }
 
   def invalidResponse(command: String): Unit = {
     println(s"command '$command' not found")
   }
 
-  def parseDates(command: String): (Option[LocalDateTime], Option[LocalDateTime]) = {
-    (parseDate(command, "from"), parseDate(command, "to", d => d.plusDays(1)))
+  def parseDates(command: String): (LocalDateTime, LocalDateTime) = {
+    (parseDate(command, "from").getOrElse(defaultFromDate), parseDate(command, "to", d => d.plusDays(1)).getOrElse(defaultToDate))
   }
 
   def parseDate(str: String, prefix: String, modifyDate: LocalDateTime => LocalDateTime = identity): Option[LocalDateTime] = {
@@ -91,13 +125,13 @@ object Main {
         try {
           Option(LocalDateTime.parse(s))
         } catch {
-          case _: DateTimeParseException => Option.empty[LocalDateTime]
+          case _: DateTimeParseException => Option.empty
         }
-        ).orElse(
+      ).orElse(
         try {
-          Option(modifyDate(LocalDate.parse(s).atTime(0, 0)))
+          Option(modifyDate(LocalDate.parse(s).atTime(0, 0, 0, 1)))
         } catch {
-          case _: DateTimeException => Option.empty[LocalDateTime]
+          case _: DateTimeException => Option.empty
         }
       )
     )
@@ -105,7 +139,17 @@ object Main {
 
   def afterMatch(s: String, regex: Regex): Option[String] = regex.findFirstMatchIn(s).map(regexpMatch => s.substring(regexpMatch.end))
 
-  val numberRegexp: Regex = "^\\s*number".r
-  val callsRegexp: Regex = "^\\s*calls".r
-  val avgRegexp: Regex = "^^\\s*avg$".r
+  private def niceDatesPeriod(dates: (LocalDateTime, LocalDateTime)): String = {
+    val formatter = DateTimeFormatter.ofPattern("d MMM uuuu HH:mm:ss")
+    s"from ${if (dates._1 == LocalDateTime.MIN) "beginning of time" else formatter.format(dates._1)} to ${formatter.format(dates._2)}"
+  }
+  private def niceCost(cost: Int): String = {
+    val dollars = cost / 100
+    val cents = cost % 100
+    val centsRepr = (100 + cents).toString.substring(1)
+    s"$dollars.$centsRepr$$"
+  }
+
+  private def defaultFromDate = LocalDateTime.MIN
+  private def defaultToDate = LocalDateTime.now()
 }

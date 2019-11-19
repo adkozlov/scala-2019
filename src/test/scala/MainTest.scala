@@ -1,6 +1,7 @@
-import java.time.LocalDateTime
+import java.time.{Duration, LocalDateTime}
 
 import org.scalatest.FunSuite
+import java.time.Duration
 import ru.spbau.jvm.scala.Main._
 
 class MainTest extends FunSuite {
@@ -37,8 +38,14 @@ class MainTest extends FunSuite {
   test("parseDates basic test") {
     val otherDateTime = dateTime.plusMinutes(1234)
     val parsed = parseDates(s"from $dateTime to $otherDateTime")
-    assert(dateTime == parsed._1.get)
-    assert(otherDateTime == parsed._2.get)
+    assert(dateTime == parsed._1)
+    assert(otherDateTime == parsed._2)
+  }
+  test("parseDates returns default values") {
+    val parsed = parseDates(s"sorry no dates here")
+    assert(LocalDateTime.MIN == parsed._1)
+    assert(Duration.between(parsed._2, LocalDateTime.now()).abs().toMinutes < 1,
+      "second argument is less than one minute away from now")
   }
 }
 

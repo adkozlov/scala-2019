@@ -15,14 +15,14 @@ import scala.concurrent.duration.Duration
 
 object PhonebookDatabaseInitializer {
 
-  def getPhonebookDatabase(tablesDirectory: Path): PhonebookQueryRunner = {
+  def getPhonebookInterface(tablesDirectory: Path): PhonebookInterface = {
     val tempDBFile = createDatabaseFile()
     val db = connectDatabase(tempDBFile)
 
     createDatabaseSchema(db)
     fillDatabase(tablesDirectory, tempDBFile)
 
-    new PhonebookQueryRunner(db)
+    new PhonebookInterface(db)
   }
 
   private def createDatabaseFile(): String = {
@@ -66,9 +66,4 @@ object PhonebookDatabaseInitializer {
       println("Proceeding anyway")
     }
   }
-}
-
-class PhonebookQueryRunner(val database: Database) {
-  def getQueryResult[R, S](query: Query[_, R, Seq]) = Await.result(database.run(query.result), Duration.Inf)
-  def run[R](action: DBIOAction[R, NoStream, Nothing]) = Await.result(database.run(action), Duration.Inf)
 }
