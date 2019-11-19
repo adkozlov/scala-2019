@@ -1,0 +1,37 @@
+{
+  "name": "simple database",
+  "calls": [
+    {
+      "firstName": "A",
+      "secondName": "B",
+      "number": "88005553535",
+      "duration": "0.1",
+      "cost": "1",
+      "date": "2019.10.10"
+    },
+    {
+      "firstName": "X",
+      "secondName": "Y",
+      "number": "00000000000",
+      "duration": "10",
+      "cost": "100.5",
+      "date": "2019.10.11"
+    },
+    {
+      "firstName": "X",
+      "secondName": "Y",
+      "number": "00000000000",
+      "duration": "0",
+      "cost": "5",
+      "date": "2019.10.11"
+    },
+    {
+      "firstName": "A",
+      "secondName": "B",
+      "number": "88005553535",
+      "duration": "1",
+      "cost": "1",
+      "date": "2018.10.10"
+    }
+  ]
+}
