@@ -57,4 +57,18 @@ class DataBaseTest extends org.scalatest.FlatSpec with Matchers {
 
         found should be (expected)
     }
+
+    it should "throw an exception when there is no such an employee in database with given name and surname" in {
+        val dataBase = new DataBase
+        dataBase.loadDataBase("resources/calls.txt", "resources/matching.txt")
+        assertThrows[NoSuchElementException] {
+            dataBase.getUserByNameSurname("StrangerName", "StrangerSurname")
+        }
+    }
+
+    it should "return null when there is no such an employee in database with given id" in {
+        val dataBase = new DataBase
+        dataBase.loadDataBase("resources/calls.txt", "resources/matching.txt")
+        dataBase.getUserById(123) should be (null)
+    }
 }
