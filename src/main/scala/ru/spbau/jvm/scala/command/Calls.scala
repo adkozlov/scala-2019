@@ -5,7 +5,9 @@ import ru.spbau.jvm.scala.storage.db.orm.{Call, User}
 import ru.spbau.jvm.scala.util.Interval
 
 object Calls extends Command {
-  override val help: String = "calls - list of calls in database"
+  override val name: String = "calls"
+
+  override val help: String = "list of calls in database"
 
   private case class Pair(user: Option[User], call: Call)
 
