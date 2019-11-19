@@ -1,4 +1,4 @@
-name := "scala-2019"
+name := "hw01"
 
 version := "0.1"
 
