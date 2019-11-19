@@ -16,20 +16,24 @@ import scala.util.matching.Regex
 
 object Main {
   private val tablesDirectory = "resources"
-  private val runner = PhonebookDatabaseInitializer.getPhonebookInterface(Path.of(tablesDirectory))
+  private val phonebookInterface = PhonebookDatabaseInitializer.getPhonebookInterface(Path.of(tablesDirectory))
 
   def main(args: Array[String]): Unit = {
     mainLoop()
   }
 
   def mainLoop(): Unit = {
-    val numberRegexp = "^[\\s]*number(.*)".r
-    val callsRegexp = "^[\\s]*calls(.*)".r
-    val avgRegexp = "^[\\s]*avg(.*)".r
-    val totalRegexp = "^[\\s]*total(.*)".r
-    val userRegexp = "^[\\s]*user(.*)".r
-    val callerRegex = "^[\\s]*caller(.*)".r
-    val internalRegex = "^[\\s]*internal(.*)".r
+    def commandRegex(command: String) = s"^[\\s]*$command(.*)".r
+
+    val commands: Seq[(String, String => Unit)] = Seq(
+      ("number", dealNumber),
+      ("calls", dealCalls),
+      ("avg", dealAvg),
+      ("total", dealTotal),
+      ("user", dealUser),
+      ("caller", dealCaller),
+      ("internal", dealInternal)
+    )
 
     var exitFlag = false
     while (!exitFlag) {
@@ -38,16 +42,18 @@ object Main {
         case "help" => help()
         case "quit" => exitFlag = true
         case "q" => exitFlag = true
-        case numberRegexp(c) => dealNumber(c)
-        case callsRegexp(c) => dealCalls(c)
-        case avgRegexp(c) => dealAvg(c)
-        case totalRegexp(c) => dealTotal(c)
-        case userRegexp(c) => dealUser(c)
-        case callerRegex(c) => dealCaller(c)
-        case internalRegex(c) => dealInternal(c)
         case "schema" => printSchema()
-        case "qwe" => println("qwe")
-        case other => invalidResponse(other)
+        case command =>
+          commands.map { case (commandName, commandDealer) =>
+            val reg = commandRegex(commandName)
+            () => command match {
+              case reg(c) =>
+                commandDealer(c)
+                true
+              case _ =>
+                false
+            }
+          }.foldLeft(false)((matched, b) => matched || b())
       }
     }
   }
@@ -84,7 +90,7 @@ object Main {
   def dealUser(str: String): Unit = {
     val numberRegex = "^[\\s]*([^\\s]+)[\\s]*$".r
     str match {
-      case numberRegex(number) => runner.getNumberUsers(number).foreach {
+      case numberRegex(number) => phonebookInterface.getNumberUsers(number).foreach {
         case (name, surname) => println(s"$name $surname")
       }
       case _ => println("Number not found")
@@ -94,7 +100,7 @@ object Main {
   def dealCaller(str: String): Unit = {
     val callerRegex = "^[\\s]*([^\\s]+)[\\s]*$".r
     str match {
-      case callerRegex(callee) => runner.getUsersCalledTo(callee).foreach {
+      case callerRegex(callee) => phonebookInterface.getUsersCalledTo(callee).foreach {
         case (name, surname) => println(s"$name $surname")
       }
       case _ => println("Nobody called this number")
@@ -104,7 +110,7 @@ object Main {
   def dealNumber(str: String): Unit = {
     val nameSurnameRegex = "[\\s]*([^\\s]+)[\\s]*([^\\s]*)[\\s]*".r
     str match {
-      case nameSurnameRegex(name, surname) => runner.getUserNumbersLeftJoined(name, surname) match {
+      case nameSurnameRegex(name, surname) => phonebookInterface.getUserNumbersLeftJoined(name, surname) match {
         case Some(a) => a.foreach(println)
         case None => println(s"employee '$name $surname' not found\n")
       }
@@ -115,7 +121,7 @@ object Main {
   def dealTotal(str: String): Unit = {
     val dates = parseDates(str)
     println(s"Total call cost ${niceDatesPeriod(dates)}")
-    println(runner.getTotal(dates._1, dates._2)
+    println(phonebookInterface.getTotal(dates._1, dates._2)
       .map(niceCost)
       .getOrElse("No calls in that period")
     )
@@ -124,19 +130,19 @@ object Main {
   def dealCalls(str: String): Unit = {
     val dates = parseDates(str)
     println(s"Calls ${niceDatesPeriod(dates)}")
-    printCalls(runner.getCalls(dates._1, dates._2))
+    printCalls(phonebookInterface.getCalls(dates._1, dates._2))
   }
 
   def dealInternal(str: String): Unit = {
     val dates = parseDates(str)
     println(s"Internal calls ${niceDatesPeriod(dates)}")
-    printCalls(runner.getInternalCalls(dates._1, dates._2))
+    printCalls(phonebookInterface.getInternalCalls(dates._1, dates._2))
   }
 
   def dealAvg(str: String): Unit = {
     val dates = parseDates(str)
     println(s"Average call cost ${niceDatesPeriod(dates)}")
-    println(runner.getAvg(dates._1, dates._2)
+    println(phonebookInterface.getAvg(dates._1, dates._2)
       .map(niceCost)
       .getOrElse("No calls in that period")
     )
