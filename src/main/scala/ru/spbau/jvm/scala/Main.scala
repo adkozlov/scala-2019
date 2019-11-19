@@ -28,6 +28,8 @@ object Main {
     val avgRegexp = "^[\\s]*avg(.*)".r
     val totalRegexp = "^[\\s]*total(.*)".r
     val userRegexp = "^[\\s]*user(.*)".r
+    val callerRegex = "^[\\s]*caller(.*)".r
+    val internalRegex = "^[\\s]*internal(.*)".r
 
     var exitFlag = false
     while (!exitFlag) {
@@ -41,6 +43,8 @@ object Main {
         case avgRegexp(c) => dealAvg(c)
         case totalRegexp(c) => dealTotal(c)
         case userRegexp(c) => dealUser(c)
+        case callerRegex(c) => dealCaller(c)
+        case internalRegex(c) => dealInternal(c)
         case "schema" => printSchema()
         case "qwe" => println("qwe")
         case other => invalidResponse(other)
@@ -62,8 +66,10 @@ object Main {
       ("number NAME [SURNAME]", "displays number, assigned to an employee with provided name and surname"),
       ("calls [from DATE] [to DATE]", "displays calls in specified interval of time. By default dates are from -inf to inf"),
       ("total [from DATE] [to DATE]", "displays total cost of calls in specified interval of time. By default dates are from -inf to current moment"),
-      ("user NUMBER", "finds employees who use this number")  
-    ) // TODO
+      ("user NUMBER", "finds employees who use this number"),
+      ("internal [from DATE] [to DATE]", "displays calls in specified period where callee is one of corporation numbers"),
+      ("caller NUMBER", "finds employees who have called this number")
+    )
     val commandLength = commandsList.map(_._1.length).max
 
     println("Commands:")
@@ -85,10 +91,20 @@ object Main {
     }
   }
 
+  def dealCaller(str: String): Unit = {
+    val callerRegex = "^[\\s]*([^\\s]+)[\\s]*$".r
+    str match {
+      case callerRegex(callee) => runner.getUsersCalledTo(callee).foreach {
+        case (name, surname) => println(s"$name $surname")
+      }
+      case _ => println("Nobody called this number")
+    }
+  }
+
   def dealNumber(str: String): Unit = {
     val nameSurnameRegex = "[\\s]*([^\\s]+)[\\s]*([^\\s]*)[\\s]*".r
     str match {
-      case nameSurnameRegex(name, surname) => runner.getUserNumbersLeft(name, surname) match {
+      case nameSurnameRegex(name, surname) => runner.getUserNumbersLeftJoined(name, surname) match {
         case Some(a) => a.foreach(println)
         case None => println(s"employee '$name $surname' not found\n")
       }
@@ -108,11 +124,13 @@ object Main {
   def dealCalls(str: String): Unit = {
     val dates = parseDates(str)
     println(s"Calls ${niceDatesPeriod(dates)}")
-    println("FirstName | LastName | Callee | Duration (s) | Cost ($) | Time")
-    runner.getCalls(dates._1, dates._2).foreach {
-      case ((_, name, surname, _), (_, callee, time, cost, datetime)) =>
-        println(s"$name | $surname | $callee | $time | ${niceCost(cost)} | $datetime")
-    }
+    printCalls(runner.getCalls(dates._1, dates._2))
+  }
+
+  def dealInternal(str: String): Unit = {
+    val dates = parseDates(str)
+    println(s"Internal calls ${niceDatesPeriod(dates)}")
+    printCalls(runner.getInternalCalls(dates._1, dates._2))
   }
 
   def dealAvg(str: String): Unit = {
@@ -164,6 +182,14 @@ object Main {
     val cents = cost % 100
     val centsRepr = (100 + cents).toString.substring(1)
     s"$dollars.$centsRepr$$"
+  }
+
+  private def printCalls(calls: Seq[((Int, String, String, Int), (Int, String, Int, Int, String))]): Unit = {
+    println("FirstName | LastName | Callee | Duration (s) | Cost ($) | Time")
+    calls.foreach {
+      case ((_, name, surname, _), (_, callee, time, cost, datetime)) =>
+        println(s"$name | $surname | $callee | $time | ${niceCost(cost)} | $datetime")
+    }
   }
 
   private def defaultFromDate = LocalDateTime.MIN

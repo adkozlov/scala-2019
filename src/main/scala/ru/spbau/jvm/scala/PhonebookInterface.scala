@@ -27,7 +27,21 @@ class PhonebookInterface(val database: Database) {
       } yield (user.name, user.surname)
       ).result)
 
-  def getUserNumbersLeft(name: String, surname: String): Option[Seq[String]] = {
+  def getInternalCalls(from: LocalDateTime, to: LocalDateTime): Seq[((Int, String, String, Int), (Int, String, Int, Int, String))] = run((
+    for {
+      num <- numbers
+      (user, call) <- callsFromToWithUser(from, to) if call.callee === num.number
+    } yield (user, call)
+  ).result)
+
+  def getUsersCalledTo(callee: String): Seq[(String, String)] = run((
+    for {
+      call <- calls if call.callee === callee
+      user <- call.user
+    } yield (user.name, user.surname)
+    ).distinct.result)
+
+  def getUserNumbersLeftJoined(name: String, surname: String): Option[Seq[String]] = {
     def optionalNumbers =
       (users.filter { u => u.name === name && u.surname === surname }.joinLeft(numbers) on (_.number_id === _.id))
       .map(_._2.map(_.number))

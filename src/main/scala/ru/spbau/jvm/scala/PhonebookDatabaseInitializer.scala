@@ -49,7 +49,6 @@ object PhonebookDatabaseInitializer {
     val writer = new OutputStreamWriter(process.getOutputStream)
 
     val importLines = tablesAndFiles.map(_._2).map(tableName => s".import ${tablesDirectory.resolve(s"$tableName.txt")} $tableName")
-    importLines.foreach(println)
 
     writer.write(".mode csv\n")
     writer.write(importLines.mkString("\n"))
