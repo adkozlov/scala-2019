@@ -27,6 +27,7 @@ object Main {
     val callsRegexp = "^[\\s]*calls(.*)".r
     val avgRegexp = "^[\\s]*avg(.*)".r
     val totalRegexp = "^[\\s]*total(.*)".r
+    val userRegexp = "^[\\s]*user(.*)".r
 
     var exitFlag = false
     while (!exitFlag) {
@@ -39,6 +40,7 @@ object Main {
         case callsRegexp(c) => dealCalls(c)
         case avgRegexp(c) => dealAvg(c)
         case totalRegexp(c) => dealTotal(c)
+        case userRegexp(c) => dealUser(c)
         case "schema" => printSchema()
         case "qwe" => println("qwe")
         case other => invalidResponse(other)
@@ -59,7 +61,8 @@ object Main {
       ("avg [from DATE] [to DATE]", "displays total average of calls costs"),
       ("number NAME [SURNAME]", "displays number, assigned to an employee with provided name and surname"),
       ("calls [from DATE] [to DATE]", "displays calls in specified interval of time. By default dates are from -inf to inf"),
-      ("total [from DATE] [to DATE]", "displays total cost of calls in specified interval of time. By default dates are from -inf to current moment")
+      ("total [from DATE] [to DATE]", "displays total cost of calls in specified interval of time. By default dates are from -inf to current moment"),
+      ("user NUMBER", "finds employees who use this number")  
     ) // TODO
     val commandLength = commandsList.map(_._1.length).max
 
@@ -70,6 +73,16 @@ object Main {
     }
     println()
     println("Date format is YYYY-MM-DD[Thh:mm[:ss[.millis]]] where T is an actual letter")
+  }
+
+  def dealUser(str: String): Unit = {
+    val numberRegex = "^[\\s]*([^\\s]+)[\\s]*$".r
+    str match {
+      case numberRegex(number) => runner.getNumberUsers(number).foreach {
+        case (name, surname) => println(s"$name $surname")
+      }
+      case _ => println("Number not found")
+    }
   }
 
   def dealNumber(str: String): Unit = {

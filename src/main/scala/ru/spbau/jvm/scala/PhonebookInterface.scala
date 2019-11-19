@@ -19,13 +19,13 @@ class PhonebookInterface(val database: Database) {
   def getCalls(from: LocalDateTime, to: LocalDateTime): Seq[((Int, String, String, Int), (Int, String, Int, Int, String))] =
     run(callsFromToWithUser(from, to).result)
 
-  def getUserNumbers(name: String, surname: String): Seq[String] =
+  def getNumberUsers(number: String): Seq[(String, String)] =
     run((
       for {
-        user <- users if user.name === name && user.surname === surname
-        number <- user.number
-      } yield number.number
-    ).result)
+        user <- users
+        num <- user.number if num.number === number
+      } yield (user.name, user.surname)
+      ).result)
 
   def getUserNumbersLeft(name: String, surname: String): Option[Seq[String]] = {
     def optionalNumbers =
