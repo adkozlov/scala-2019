@@ -1,0 +1,11 @@
+Aba,Caba,+7 999 999 99 99
+Alice,ALice,+8 888 888 88 88
+Bob,Bob,+9 999 999 99 99
+Carol,Carol,444 44 44
+John,Pore,22 22 22
+Rinat,Petrov,11 123 31
+User,WithNoOperations,77 12 33
+Ivan,Ivanov,28197
+Ivan,Ivanov,8917837
+NULL,NULL,8903210
+NULL,NULL,89037219
