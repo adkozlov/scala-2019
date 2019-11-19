@@ -14,8 +14,8 @@ class MainTest extends FunSuite {
     assert("qwe" == afterMatch("aaa   qwe", "aaa[\\s]*".r).get)
   }
 
-  val dateTime: LocalDateTime = LocalDateTime.of(1999, 7, 30, 10, 11, 12, 123)
-  val onlyDate = dateTime.toLocalDate
+  private val dateTime = LocalDateTime.of(1999, 7, 30, 10, 11, 12, 123)
+  private val onlyDate = dateTime.toLocalDate
   test("parseDate parses date with time correctly") {
     assert(dateTime == parseDate("kek " + dateTime.toString, "kek").get)
   }
