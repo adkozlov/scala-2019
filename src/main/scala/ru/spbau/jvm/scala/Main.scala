@@ -9,14 +9,12 @@ import scala.util.matching.Regex
 
 // TODO optimize imports
 // TODO remove comments
-// TODO foreign keys?
 // TODO unused queries
 // TODO TODOs
 // TODO make sure every command is implemented
 // TODO tests
 
 object Main {
-  private val tablesDirPath: Path = FileSystems.getDefault.getPath("resources")
 
   def main(args: Array[String]): Unit = {
 //    println(parseDate("  dsda kek 2020-10-10T12:16:23 dlkajslka", "kek"))
@@ -24,10 +22,6 @@ object Main {
   }
 
   def mainLoop(): Unit = {
-    val numberRegexp = "^\\s*number ".r
-    val callsRegexp = "^\\s*calls".r
-    val avgRegexp = "^^\\s*avg\\s*$".r
-
     var exitFlag = false
     while (!exitFlag) {
       val cmd = readLine
@@ -84,11 +78,9 @@ object Main {
     println(s"command '$command' not found")
   }
 
-  private def parseDates(command: String): (Option[LocalDateTime], Option[LocalDateTime]) = {
+  def parseDates(command: String): (Option[LocalDateTime], Option[LocalDateTime]) = {
     (parseDate(command, "from"), parseDate(command, "to", d => d.plusDays(1)))
   }
-
-  def afterMatch(s: String, regex: Regex): Option[String] = regex.findFirstMatchIn(s).map(regexpMatch => s.substring(regexpMatch.end))
 
   def parseDate(str: String, prefix: String, modifyDate: LocalDateTime => LocalDateTime = identity): Option[LocalDateTime] = {
     val prefixR = s"$prefix ".r
@@ -110,4 +102,10 @@ object Main {
       )
     )
   }
+
+  def afterMatch(s: String, regex: Regex): Option[String] = regex.findFirstMatchIn(s).map(regexpMatch => s.substring(regexpMatch.end))
+
+  val numberRegexp: Regex = "^\\s*number".r
+  val callsRegexp: Regex = "^\\s*calls".r
+  val avgRegexp: Regex = "^^\\s*avg$".r
 }

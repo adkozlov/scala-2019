@@ -11,3 +11,6 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies += "org.xerial" % "sqlite-jdbc" % "3.28.0"
+
+libraryDependencies += "org.scalatest" % "scalatest_2.13" % "3.0.8" % "test"
+

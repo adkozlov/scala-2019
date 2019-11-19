@@ -1,0 +1,48 @@
+import java.time.LocalDateTime
+
+import org.scalatest.FunSuite
+import ru.spbau.jvm.scala.Main._
+
+class MainTest extends FunSuite {
+
+  test("afterMatch returns correct substring") {
+    assert("qwe" == afterMatch("aaaqwe", "aaa".r).get)
+  }
+  test("afterMatch skips spaces when needed") {
+    assert("qwe" == afterMatch("aaa   qwe", "aaa[\\s]*".r).get)
+  }
+
+  val dateTime: LocalDateTime = LocalDateTime.of(1999, 7, 30, 10, 11, 12, 123)
+  val onlyDate = dateTime.toLocalDate
+  test("parseDate parses date with time correctly") {
+    assert(dateTime == parseDate("kek " + dateTime.toString, "kek").get)
+  }
+  test("parseDate parses date without time correctly") {
+    assert(onlyDate.atStartOfDay() == parseDate("kek " + onlyDate.toString, "kek").get)
+  }
+  test("parseDate modifies date without time correctly") {
+    val someDateTime = LocalDateTime.of(1,1,1,1,1)
+    assert(someDateTime == parseDate("kek " + onlyDate.toString, "kek", _ => someDateTime).get)
+  }
+
+  test("parseDate gets date not only from string beginning") {
+    val someDateTime = LocalDateTime.of(1,1,1,1,1)
+    assert(someDateTime == parseDate("some other text kek " + onlyDate.toString, "kek", _ => someDateTime).get)
+  }
+  test("parseDate gets date preceded by some spaces of different kinds") {
+    val someDateTime = LocalDateTime.of(1,1,1,1,1)
+    assert(someDateTime == parseDate("Here come spaces and tabs: kek       " + onlyDate.toString, "kek", _ => someDateTime).get)
+  }
+
+  test("parseDates basic test") {
+    val otherDateTime = dateTime.plusMinutes(1234)
+    val parsed = parseDates(s"from $dateTime to $otherDateTime")
+    assert(dateTime == parsed._1.get)
+    assert(otherDateTime == parsed._2.get)
+  }
+}
+
+// a workaround for Idea Scala plugin error
+object Runner extends App {
+  org.scalatest.run(new MainTest())
+}
