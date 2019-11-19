@@ -19,12 +19,29 @@ class PhonebookInterface(val database: Database) {
   def getCalls(from: LocalDateTime, to: LocalDateTime): Seq[((Int, String, String, Int), (Int, String, Int, Int, String))] =
     run(callsFromToWithUser(from, to).result)
 
-  def getUserNumbers(name: String, surname: String): Seq[String] = run((
+  def getUserNumbers(name: String, surname: String): Seq[String] =
+    run((
       for {
         user <- users if user.name === name && user.surname === surname
         number <- user.number
       } yield number.number
     ).result)
+
+  def getUserNumbersLeft(name: String, surname: String): Option[Seq[String]] = {
+    def optionalNumbers =
+      (users.filter { u => u.name === name && u.surname === surname }.joinLeft(numbers) on (_.number_id === _.id))
+      .map(_._2.map(_.number))
+
+    // for each user with provided name and surname contains None or each number of this user
+    val numbersResult: Seq[Option[String]] = run(optionalNumbers.result)
+
+
+    if (numbersResult.isEmpty)
+      // no users found
+      None
+    else
+      Some(numbersResult.flatten)
+  }
 
   private def callsFromTo(from: LocalDateTime, to: LocalDateTime) =
     calls.filter(

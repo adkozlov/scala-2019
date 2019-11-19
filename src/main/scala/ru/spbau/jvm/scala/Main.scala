@@ -57,7 +57,7 @@ object Main {
       ("quit", "exit"),
       ("help", "displays this message"),
       ("avg [from DATE] [to DATE]", "displays total average of calls costs"),
-      ("number NAME [SURNAME]", "displays number, assigned to employee with provided name"),
+      ("number NAME [SURNAME]", "displays number, assigned to an employee with provided name and surname"),
       ("calls [from DATE] [to DATE]", "displays calls in specified interval of time. By default dates are from -inf to inf"),
       ("total [from DATE] [to DATE]", "displays total cost of calls in specified interval of time. By default dates are from -inf to current moment")
     ) // TODO
@@ -73,9 +73,12 @@ object Main {
   }
 
   def dealNumber(str: String): Unit = {
-    val nameSurnameRegex = "([^\\s]+)[\\s]*([^\\s]*)[\\s]*".r
+    val nameSurnameRegex = "[\\s]*([^\\s]+)[\\s]*([^\\s]*)[\\s]*".r
     str match {
-      case nameSurnameRegex(name, surname) => runner.getUserNumbers(name, surname).foreach(println)
+      case nameSurnameRegex(name, surname) => runner.getUserNumbersLeft(name, surname) match {
+        case Some(a) => a.foreach(println)
+        case None => println(s"employee '$name $surname' not found\n")
+      }
       case _ => println("Please specify name [and surname] each in one word")
     }
   }
