@@ -63,7 +63,7 @@ object Main {
       ("q", ""),
       ("quit", "exit"),
       ("help", "displays this message"),
-      ("avg [from DATE] [to DATE]", "displays total average of calls costs"),
+      ("avg [from DATE] [to DATE]", "displays average of calls time"),
       ("number NAME [SURNAME]", "displays number, assigned to an employee with provided name and surname"),
       ("calls [from DATE] [to DATE]", "displays calls in specified interval of time. By default dates are from -inf to inf"),
       ("total [from DATE] [to DATE]", "displays total cost of calls in specified interval of time. By default dates are from -inf to current moment"),
@@ -138,7 +138,7 @@ object Main {
     val dates = parseDates(str)
     println(s"Average call cost ${niceDatesPeriod(dates)}")
     println(phonebookInterface.getAvg(dates._1, dates._2)
-      .map(niceCost)
+      .map(avg => s"${avg}s")
       .getOrElse("No calls in that period")
     )
   }

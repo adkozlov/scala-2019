@@ -59,7 +59,7 @@ class DatabaseTest extends FunSuite with BeforeAndAfterEach {
   }
 
   test("computes avg right") {
-    val avgCost: Double = (99 + 1 + 9) / 3
+    val avgCost: Double = (228 + 123 + 123) / 3
     assert(avgCost == interface.getAvg(dateFrom2019, dateTo2019).get)
   }
 

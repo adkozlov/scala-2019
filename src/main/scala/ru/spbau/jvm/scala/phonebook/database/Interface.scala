@@ -14,7 +14,7 @@ class Interface(val database: Database) {
     run(callsFromTo(from, to).map(_.cost).sum.result)
 
   def getAvg(from: LocalDateTime, to: LocalDateTime): Option[Int] =
-    run(callsFromTo(from, to).map(_.cost).avg.result)
+    run(callsFromTo(from, to).map(_.time).avg.result)
 
   def getCalls(from: LocalDateTime, to: LocalDateTime): Seq[((Int, String, String, Int), (Int, String, Int, Int, String))] =
     run(callsFromToWithUser(from, to).result)
