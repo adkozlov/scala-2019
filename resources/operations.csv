@@ -1,0 +1,4 @@
+0,output call,0.2
+1,input call ,0.1
+2,output sms ,0.01
+3,input sms  ,0.005
