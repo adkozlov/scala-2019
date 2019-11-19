@@ -38,20 +38,18 @@ final class CallsDB(employeesArray: Array[EmployeeDB], numbersArray: Array[Phone
    * Finds all calls made during a specified period. The computational complexity of the method is O(log(n) + k) where n
    * is the number of all calls in the db and k is the number of calls made during the specified period.
    */
-  def getCalls(from: LocalDateTime = LocalDateTime.MIN, to: LocalDateTime = LocalDateTime.MAX): Seq[Call] = {
+  def getCalls(from: LocalDateTime = LocalDateTime.MIN, to: LocalDateTime = LocalDateTime.MAX): Seq[Call] =
     getCallsInPeriod(from, to).map(convertCallDbToCall)
-  }
 
   /**
    * Computes total cost of calls made during the specified period.
    * The computational complexity of the method is O(log(n) + k) where n is the number of all calls in the db
    * and k is the number of calls made during the specified period.
    */
-  def getTotal(from: LocalDateTime = LocalDateTime.MIN, to: LocalDateTime = LocalDateTime.MAX): Double = {
-    getCallsInPeriod(from, to).foldLeft(0: Double) {(accumulator, callDb) =>
+  def getTotal(from: LocalDateTime = LocalDateTime.MIN, to: LocalDateTime = LocalDateTime.MAX): Double =
+    getCallsInPeriod(from, to).foldLeft(0: Double) { (accumulator, callDb) =>
       accumulator + callDb.cost
     }
-  }
 
   /**
    * Computes the average duration of calls made during the specified period.
@@ -60,7 +58,7 @@ final class CallsDB(employeesArray: Array[EmployeeDB], numbersArray: Array[Phone
    */
   def getAvg(from: LocalDateTime = LocalDateTime.MIN, to: LocalDateTime = LocalDateTime.MAX): Double = {
     // iterative average
-    getCallsInPeriod(from, to).foldLeft((0: Double, 1: Int)) {(accumulator, callDb) =>
+    getCallsInPeriod(from, to).foldLeft((0: Double, 1: Int)) { (accumulator, callDb) =>
       val duration = callDb.duration
       val currentAvg = accumulator._1
       val step = accumulator._2
@@ -89,12 +87,15 @@ final class CallsDB(employeesArray: Array[EmployeeDB], numbersArray: Array[Phone
    * Finds all calls made by the specified employee.
    * The computational complexity of the method is O(log(n) + k) where n is the number of all calls in the db
    * and k is the number of calls made during the specified period.
+   * Throws NoSuchElementException if that employee is not found in db.
    */
+  @throws[NoSuchElementException]
   def getOutgoing(name: Name,
                   from: LocalDateTime = LocalDateTime.MIN,
                   to: LocalDateTime = LocalDateTime.MAX): Seq[Call] = {
+    val employeeNumber = getNumber(name)
     getCallsInPeriod(from, to).filter { callDb =>
-      numberToName(callDb.fromNumber) contains name
+      employeeNumber == callDb.numberFrom
     }.map(convertCallDbToCall)
   }
 
@@ -103,12 +104,15 @@ final class CallsDB(employeesArray: Array[EmployeeDB], numbersArray: Array[Phone
    * Throws NoSuchElementException if that employee is not found in db.
    * The computational complexity of the method is O(log(n) + k) where n is the number of all calls in the db
    * and k is the number of calls made during the specified period.
+   * Throws NoSuchElementException if that employee is not found in db.
    */
+  @throws[NoSuchElementException]
   def getIncoming(name: Name,
                   from: LocalDateTime = LocalDateTime.MIN,
                   to: LocalDateTime = LocalDateTime.MAX): Seq[Call] = {
+    val employeeNumber = getNumber(name)
     getCallsInPeriod(from, to).filter { callDb =>
-      numberToName.get(callDb.toNumber).flatten contains name
+      employeeNumber == callDb.numberTo
     }.map(convertCallDbToCall)
   }
 
@@ -128,22 +132,23 @@ final class CallsDB(employeesArray: Array[EmployeeDB], numbersArray: Array[Phone
     calls.slice(startIndex, endIndex)
   }
 
-  private def convertCallDbToCall(callDb: CallDB): Call = {
-    Call(
-      numberToName(callDb.fromNumber).getOrElse(Name("Unknown", "Unknown")),
-      callDb.toNumber,
-      callDb.duration,
-      callDb.cost
-    )
-  }
+  private def convertCallDbToCall(callDb: CallDB): Call = Call(
+    numberToName(callDb.numberFrom).getOrElse(Name("Unknown", "Unknown")),
+    callDb.numberTo,
+    callDb.duration,
+    callDb.cost
+  )
 }
 
 object CallsDB {
+
   case class Name(firstName: String, lastName: String)
+
   case class Call(caller: Name, callee: String, duration: Int, cost: Float)
 
   // those case classes represent raws in csv-db files
   private case class EmployeeDB(firstName: String, lastName: String, numberId: Int)
+
   private case class PhoneNumberDB(id: Int, number: String)
 
   private trait Event {
@@ -152,8 +157,8 @@ object CallsDB {
 
   implicit def orderingByTime[A <: Event]: Ordering[A] = Ordering.fromLessThan(_.getTime isBefore _.getTime)
 
-  private case class CallDB(fromNumber: String,
-                            toNumber: String,
+  private case class CallDB(numberFrom: String,
+                            numberTo: String,
                             timeStart: LocalDateTime,
                             duration: Int,
                             cost: Float) extends Event {
