@@ -1,0 +1,11 @@
+1, Adams, Henry
+2, Adams, John
+3, Adams, John Quincy
+4, Adams, Samuel
+5, Adams, Scott
+6, Addams, Jane
+7, Addison, Joseph
+8, Adorno, Theodor
+9, Adler, Alfred
+10, Affleck, Ben
+11, Agena, Keiko
