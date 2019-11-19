@@ -1,7 +1,8 @@
+package ru.spbau.jvm.scala.phonebook
+
 import java.time.{Duration, LocalDateTime}
 
 import org.scalatest.FunSuite
-import java.time.Duration
 import ru.spbau.jvm.scala.phonebook.Main._
 
 class MainTest extends FunSuite {

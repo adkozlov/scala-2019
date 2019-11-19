@@ -164,7 +164,7 @@ object Main {
         }
       ).orElse(
         try {
-          Option(modifyDate(LocalDate.parse(s).atTime(0, 0, 0, 1)))
+          Option(modifyDate(LocalDate.parse(s).atTime(0, 0)))
         } catch {
           case _: DateTimeException => Option.empty
         }
