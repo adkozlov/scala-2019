@@ -2,11 +2,11 @@ package ru.spbau.jvm.scala.command
 
 import ru.spbau.jvm.scala.{ClientsSchema, DB}
 
-object Number extends Command {
+object Number extends Command("number") {
   override def execute(args: List[String]): Either[String, String] = {
     val nameSurnameE = args match {
       case name :: surname :: _ => Right((name, surname))
-      case _ => Left("Wrong number of argu,ents for the command number")
+      case _ => Left("Wrong number of arguments for the command number")
     }
 
     if (nameSurnameE.isLeft) {
@@ -16,9 +16,9 @@ object Number extends Command {
 
     val Right((name, surname)) = nameSurnameE
 
-    Right(DB.ClientsTable.filterRows(x => x(ClientsSchema.FirstName).toString == name
-      && x(ClientsSchema.SecondName).toString == surname).print())
+    Right(DB.ClientsTable.filterRows(x => x(ClientsSchema.FirstName).asString == name
+      && x(ClientsSchema.SecondName).asString == surname).getColumn(ClientsSchema.Number).head.toString)
   }
 
-  def help(): String = "avg — average length of call"
+  def help(): String = "number VARCHAR VARCHAR — gets phone number of given client"
 }

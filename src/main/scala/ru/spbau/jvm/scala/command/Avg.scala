@@ -1,14 +1,14 @@
 package ru.spbau.jvm.scala.command
 
-import ru.spbau.jvm.scala.{DB, FieldValue, OperationsSchema}
+import ru.spbau.jvm.scala.{DB, OperationsSchema}
 
-object Avg extends Command {
+object Avg extends Command("avg") {
   override def execute(args: List[String]): Either[String, String] = {
     if (args.nonEmpty) {
-      return Left("Too many arguments for the command avg")
+      return Left(wrongNumberOfArguments)
     }
 
-    val valuesAsFloats = DB.OperationsTable.getColumn(OperationsSchema.Duration).map(x => x.toFloat)
+    val valuesAsFloats = DB.OperationsTable.getColumn(OperationsSchema.Duration).map(x => x.asFloat)
 
     Right(valuesAsFloats.iterator.sum / valuesAsFloats.length + "s")
   }
