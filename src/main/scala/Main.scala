@@ -2,6 +2,8 @@ import java.time.LocalDate
 
 import scala.io.StdIn
 
+import java.security.MessageDigest
+
 object Main {
     private val DATE_PATTERN = "(\\d{2}).(\\d{2}).(\\d{4})"
     private val CALLS_FROM_TO_RE = f"calls from $DATE_PATTERN to $DATE_PATTERN".r
@@ -20,21 +22,27 @@ object Main {
           |c
         """.stripMargin
 
+    private val digest = MessageDigest.getInstance("SHA-256")
+    private val dataBase = DataBase
+
     def main(args: Array[String]): Unit = {
-        while (true) {
-            val command = StdIn.readLine()
-            command match {
-                case "exit" => return
-                case "help" => println(HELP_MESSAGE)
-                case _ =>
-                    try {
-                        process(command)
-                    } catch {
-                        case e: Exception => println(e.getMessage)
-                    }
+        try {
+            dataBase.loadDataBase("resources/calls.txt", "resources/matchings.txt")
+            while (true) {
+                val command = StdIn.readLine()
+                command match {
+                    case "exit" => return
+                    case "help" => println(HELP_MESSAGE)
+                    case _ => process(command)
+                }
             }
+        } catch {
+            case e: Exception => println(e.getMessage)
         }
     }
+
+    def getUserHash(name: String, surname: String): String =
+        digest.digest((name + "," + surname).getBytes("UTF-8")).map("%02x".format(_)).mkString
 
     def processCallsFromTo(from: LocalDate, to: LocalDate): Unit = {
         println(f"calls from $from to $to")
