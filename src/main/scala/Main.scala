@@ -119,7 +119,7 @@ object Main {
     def processNumber(name: String, surname: String): Unit = {
         try {
             val user = dataBase.getUserByNameSurname(name, surname)
-            println(s"{${user.number}}")
+            println(s"${user.number}")
         } catch {
             case _: Exception =>
                 throw new IllegalArgumentException(s"employee '$name $surname' not found")

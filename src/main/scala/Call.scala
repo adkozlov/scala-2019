@@ -12,4 +12,15 @@ class Call(
 
     override def toString: String =
         s"$idFrom --> $idTo duration: $duration, cost: $cost, date: $date"
+
+    override def equals(obj: Any): Boolean =
+        obj match {
+            case obj: Call =>
+                idFrom.equals(obj.idFrom) &&
+                idTo.equals(obj.idTo) &&
+                duration.equals(obj.duration) &&
+                cost.equals(obj.cost) &&
+                date.equals(obj.date)
+            case _ => false
+        }
 }
