@@ -1,0 +1,10 @@
+88005553530;Mark;Kram
+88005553531;Roberto;Otrebor
+88005553532;Alberto;Otrebla
+88005553533;Marvin;Nivram
+88005553534;Franz;Znarf
+88005553535;Rolf;Flor
+88005553536;Carlos;Solrac
+88005553537;Anton;Notna
+88005553538;Alberta;Atrebla
+88005553539;Leon;Noel
