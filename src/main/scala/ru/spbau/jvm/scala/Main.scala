@@ -3,15 +3,29 @@ package ru.spbau.jvm.scala
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDate, LocalDateTime}
 
-import ru.spbau.jvm.scala.CallsDB.Call
+import ru.spbau.jvm.scala.CallsDB.{Call, Name}
 
 import scala.io.StdIn
 import scala.util.{Success, Try}
 
 object Main {
-  private val fromToLiteral = "(?:\\s+from ([0-9.\\-]+))?(?:\\s+to ([0-9.\\-]+))?"
-  private val callsPattern = s"calls$fromToLiteral".r
-  private val avgPattern = "avg(?:\\s+from ([0-9.\\-]+))?(?:\\s+to ([0-9.\\-]+))?".r
+  private val fromToSubPattern = "(?:\\s+from ([0-9.\\-]+))?(?:\\s+to ([0-9.\\-]+))?"
+  private val nameSubPattern = "\\s+(\\p{L}+)\\s+(\\p{L}+)"
+  private val numberSubPattern = "\\s+(\\+(?:\\s*[0-9])+)"
+
+  private val callsPattern = s"calls$fromToSubPattern".r
+  private val avgPattern = s"avg$fromToSubPattern".r
+  private val totalPattern = s"total$fromToSubPattern".r
+  private val numberPattern = s"number$nameSubPattern".r
+  private val employeePattern = s"employee$numberSubPattern".r
+  private val outgoingPattern = s"outgoing$nameSubPattern$numberSubPattern".r
+  private val incomingPattern = s"incoming$nameSubPattern$numberSubPattern".r
+  private val helpPattern = "help".r
+
+  private val helpMessage =
+    """
+      |hello there!
+      |""".stripMargin
 
   def main(args: Array[String]): Unit = {
     val callsDb = CallsDB()
@@ -26,6 +40,18 @@ object Main {
         case avgPattern(from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
           println(callsDb.getAvg(timeFrom, timeTo))
         }
+        case totalPattern(from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
+          println(callsDb.getTotal(timeFrom, timeTo))
+        }
+        case numberPattern(firstName, lastName) => println(callsDb.getNumber(Name(firstName, lastName)))
+        case employeePattern(number) =>  println(callsDb.getEmployee(number.trim))
+        case outgoingPattern(firstName, lastName, from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
+          callsDb.getOutgoing(Name(firstName, lastName), timeFrom, timeTo).foreach(printCall)
+        }
+        case incomingPattern(firstName, lastName, from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
+          callsDb.getIncoming(Name(firstName, lastName), timeFrom, timeTo).foreach(printCall)
+        }
+        case helpPattern() => println(helpMessage)
         case other => println(s"command '$other' not found")
       }
       shouldContinue = lineOption.isDefined
@@ -53,6 +79,10 @@ object Main {
 
   private def printCall(call: Call): Unit = {
     val Call(caller, callee, duration, cost) = call
-    println(s"${caller.firstName} | ${caller.lastName} | $callee | $duration | $cost")
+    println(s"${caller.firstName} | ${caller.lastName} | ${formatNumber(callee)} | $duration | $cost")
+  }
+
+  private def formatNumber(number: String): String = {
+    number.replaceFirst("(\\d{2})(\\d{4})", "$1 $2 ")
   }
 }
