@@ -1,60 +1,62 @@
+import java.time.LocalDate
 import java.util
+import java.util.stream.Collectors
 
 import scala.io.Source
 
-object DataBase {
+class DataBase {
 
-    private val CALL_RE = "([a-zA-Z.\\ ]+),([a-zA-Z.\\ ]+),(\\+?\\d{11}),([0-9\\.]+),([0-9\\.]+)".r
-    private val MATCHING_RE = "([0-9a-f]+),(\\+?\\d{11})".r
+    private val DATE_PATTERN = "(\\d{2}).(\\d{2}).(\\d{4})"
+    private val CALL_RE = s"(\\d+),(\\d+),([0-9\\.]+),([0-9\\.]+),$DATE_PATTERN".r
+    private val MATCHING_RE = "([a-zA-Z.\\ ]+),([a-zA-Z.\\ ]+),(\\+?\\d{11}),(\\d+)".r
 
     private val calls = new util.ArrayList[Call]()
-    private val matchings = new util.ArrayList[Matching]()
+    private val matching = new util.HashMap[Int, User]()
 
-    def loadDataBase(callsFile: String, matchingsFile: String): Unit = {
+    def loadDataBase(callsFile: String, matchingFile: String): Unit = {
         loadCalls(callsFile)
-        loadMatchings(matchingsFile)
+        loadMatchings(matchingFile)
     }
 
     private def loadCalls(callsFile: String): Unit = {
-        println(f"load calls from $callsFile")
+        calls.clear()
         for (record <- Source.fromFile(callsFile).getLines()) {
             val call = record match {
-                case CALL_RE(name, surname, callee, duration, cost) =>
-                    new Call(name, surname, callee, duration.toDouble, cost.toDouble)
-                case _ => throw new IllegalArgumentException(f"Unrecognised format of record: '$record'")
+                case CALL_RE(idFrom, idTo, duration, cost, day, month, year) =>
+                    new Call(
+                        idFrom.toInt,
+                        idTo.toInt,
+                        duration.toDouble,
+                        cost.toDouble,
+                        LocalDate.of(year.toInt, month.toInt, day.toInt)
+                    )
+                case _ =>
+                    throw new IllegalArgumentException(f"Unrecognised format of record: '$record'")
             }
             calls.add(call)
         }
-        calls.forEach(println)
     }
 
     private def loadMatchings(matchingsFile: String): Unit = {
-        println("load matchings")
+        matching.clear()
         for (record <- Source.fromFile(matchingsFile).getLines()) {
-            val matching = record match {
-                case MATCHING_RE(hash, number) => new Matching(hash, number)
-                case _ => throw new IllegalArgumentException(f"Unrecognised format of record: '$record'")
+            record match {
+                case MATCHING_RE(name, surname, number, id) =>
+                    matching.put(id.toInt, new User(name, surname, number, id.toInt))
+                case _ =>
+                    throw new IllegalArgumentException(f"Unrecognised format of record: '$record'")
             }
-            matchings.add(matching)
         }
-        matchings.forEach(println)
     }
 
-    private class Call(
-                  val name: String,
-                  val surname: String,
-                  val callee: String,
-                  val duration: Double,
-                  val cost: Double
-              ) {
-        def getName: String = name
-        def getSurname: String = surname
-        override def toString: String =
-            s"$name | $surname | $callee | $duration | $cost"
-    }
+    def getCallsInPeriod(from: LocalDate, to: LocalDate): util.List[Call] =
+        calls.stream().filter(x => x.isBetween(from, to)).collect(Collectors.toList[Call])
 
-    private class Matching(val ownerHash: String, phoneNumber: String) {
-        override def toString: String = phoneNumber
-    }
+    def getUserById(id: Int): User = matching.get(id)
 
+    def getUserByNameSurname(name: String, surname: String): User =
+        matching.entrySet()
+            .stream()
+            .filter(entry => entry.getValue.name.equals(name) && entry.getValue.surname.equals(surname))
+            .findAny().get().getValue
 }

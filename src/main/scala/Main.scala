@@ -1,10 +1,11 @@
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 import scala.io.StdIn
 
-import java.security.MessageDigest
-
 object Main {
+
+    private val CALLS_LIST_HEADER = "FirstName | LastName | Callee | Duration (s) | Cost ($) | Date (dd.MM.uuuu)"
     private val DATE_PATTERN = "(\\d{2}).(\\d{2}).(\\d{4})"
     private val CALLS_FROM_TO_RE = f"calls from $DATE_PATTERN to $DATE_PATTERN".r
     private val AVG_RE = "avg".r
@@ -14,70 +15,122 @@ object Main {
     private val TOTAL_FROM_RE = f"total from $DATE_PATTERN".r
     private val TOTAL_RE = f"total".r
     private val NUMBER_RE = f"number ([a-zA-Z]+) ([a-zA-Z]+)".r
-    private val SORTED_RE = f"sorted from $DATE_PATTERN to $DATE_PATTERN by ([a-zA-Z]+)".r
+    private val SORTED_RE = f"sorted from $DATE_PATTERN to $DATE_PATTERN".r
     private val HELP_MESSAGE =
         """HELP
-          |a
-          |b
-          |c
+          |calls from FROM_DATE to TO_DATE
+          |avg (duration, s)
+          |min (duration, s)
+          |max (duration, s)
+          |total from FROM_DATE to TO_DATE (cost, $)
+          |total from DROM_DATE (cost, $)
+          |total (cost, $)
+          |number NAME SURNAME
+          |sorted from FROM_DATE to TO_DATE (by date)
+          |help
+          |exit
+          |
+          |DATE example: 20.10.2019 (dd.mm.yyyy)
         """.stripMargin
 
-    private val digest = MessageDigest.getInstance("SHA-256")
-    private val dataBase = DataBase
+    private val dataBase = new DataBase
 
     def main(args: Array[String]): Unit = {
         try {
-            dataBase.loadDataBase("resources/calls.txt", "resources/matchings.txt")
-            while (true) {
-                val command = StdIn.readLine()
-                command match {
-                    case "exit" => return
-                    case "help" => println(HELP_MESSAGE)
-                    case _ => process(command)
-                }
-            }
+            dataBase.loadDataBase("resources/calls.txt", "resources/matching.txt")
         } catch {
-            case e: Exception => println(e.getMessage)
+            case e: Exception =>
+                println(e.getMessage)
+                return
+        }
+        while (true) {
+            val command = StdIn.readLine()
+            command match {
+                case "exit" => return
+                case "help" => println(HELP_MESSAGE)
+                case _ =>
+                    try {
+                        process(command)
+                    } catch {
+                        case e: Exception => println(e.getMessage)
+                    }
+            }
         }
     }
 
-    def getUserHash(name: String, surname: String): String =
-        digest.digest((name + "," + surname).getBytes("UTF-8")).map("%02x".format(_)).mkString
+    def printCall(call: Call): Unit = {
+        val userFrom = dataBase.getUserById(call.idFrom)
+        val userTo = dataBase.getUserById(call.idTo)
+        println(
+            s"${userFrom.name} | " +
+                s"${userFrom.surname} | " +
+                s"${userTo.number} | " +
+                s"${call.duration} | " +
+                s"${call.cost} | " +
+                s"${call.date.format(DateTimeFormatter.ofPattern("dd.MM.uuuu"))}"
+        )
+    }
 
     def processCallsFromTo(from: LocalDate, to: LocalDate): Unit = {
-        println(f"calls from $from to $to")
+        println(CALLS_LIST_HEADER)
+        dataBase.getCallsInPeriod(from, to).forEach(printCall)
     }
 
     def processAvg(): Unit = {
-        println("avg")
+        val calls = dataBase.getCallsInPeriod(LocalDate.MIN, LocalDate.MAX)
+        println(s"${calls.stream().mapToDouble(x => x.duration).sum() / calls.size()}s")
     }
 
     def processMin(): Unit = {
-        println("min")
+        println(
+            s"${dataBase.getCallsInPeriod(LocalDate.MIN, LocalDate.MAX)
+                .stream()
+                .mapToDouble(x => x.duration)
+                .min().getAsDouble}s"
+        )
     }
 
     def processMax(): Unit = {
-        println("max")
+        println(
+            s"${dataBase.getCallsInPeriod(LocalDate.MIN, LocalDate.MAX)
+                .stream()
+                .mapToDouble(x => x.duration)
+                .max().getAsDouble}s"
+        )
     }
 
     def processTotalFromTo(from: LocalDate, to: LocalDate): Unit = {
-        println(f"total from $from to $to")
+        println(
+            s"${dataBase.getCallsInPeriod(from, to)
+                .stream()
+                .mapToDouble(x => x.cost)
+                .sum()}S"
+        )
     }
 
     def processTotalFrom(from: LocalDate): Unit = {
-        println(f"total from $from")
+        processTotalFromTo(from, LocalDate.MAX)
     }
 
     def processTotal(): Unit = {
-        println("total")
+        processTotalFromTo(LocalDate.MIN, LocalDate.MAX)
     }
 
     def processNumber(name: String, surname: String): Unit = {
-        println(f"number of $name $surname")
+        try {
+            val user = dataBase.getUserByNameSurname(name, surname)
+            println(s"{${user.number}}")
+        } catch {
+            case _: Exception =>
+                throw new IllegalArgumentException(s"employee '$name $surname' not found")
+        }
     }
 
-    def processSorted(from: LocalDate, to: LocalDate, sortingType: String): Unit = {
-        println(f"sorted from $from to $to by $sortingType")
+    def processSorted(from: LocalDate, to: LocalDate): Unit = {
+        dataBase.getCallsInPeriod(from, to)
+            .stream()
+            .sorted((o1: Call, o2: Call) => o1.date.compareTo(o2.date))
+            .forEach(printCall)
     }
 
     def process(command: String): Unit = command match {
@@ -103,11 +156,10 @@ object Main {
             processTotal()
         case NUMBER_RE(name, surname) =>
             processNumber(name, surname)
-        case SORTED_RE(fromDay, fromMonth, fromYear, toDay, toMonth, toYear, sortingType) =>
+        case SORTED_RE(fromDay, fromMonth, fromYear, toDay, toMonth, toYear) =>
             processSorted(
                 LocalDate.of(fromYear.toInt, fromMonth.toInt, fromDay.toInt),
-                LocalDate.of(toYear.toInt, toMonth.toInt, toDay.toInt),
-                sortingType
+                LocalDate.of(toYear.toInt, toMonth.toInt, toDay.toInt)
             )
         case _ => throw new IllegalArgumentException(f"command '$command' not found")
     }
