@@ -1,0 +1,10 @@
+Commands:
+  avg                                   calculate average duration of a call
+  max spender                           show the name of the employee who spent the most on the calls
+  calls from DD.MM.YYYY to DD.MM.YYYY   show all calls that took place in the given period of time
+  total from DD.MM.YYYY to DD.MM.YYYY   calculate total cost of all calls that took place in the given period of time
+  number FIRST_NAME LAST_NAME           get number of the given employee
+  calls cost from DOUBLE                show all calls with costs that is more or equal
+  calls duration from INT               show all calls with duration that is more or equal
+  help                                  show this help message
+  stop                                  stop the session

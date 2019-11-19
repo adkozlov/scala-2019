@@ -1,0 +1,3 @@
+Ivan Ivanov,0
+Petr Petrov,1
+John Doe,3
