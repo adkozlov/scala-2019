@@ -2,7 +2,7 @@ import java.time.{Duration, LocalDateTime}
 
 import org.scalatest.FunSuite
 import java.time.Duration
-import ru.spbau.jvm.scala.Main._
+import ru.spbau.jvm.scala.phonebook.Main._
 
 class MainTest extends FunSuite {
 

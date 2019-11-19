@@ -1,15 +1,15 @@
-package ru.spbau.jvm.scala
+package ru.spbau.jvm.scala.phonebook.database
 
 import java.time.LocalDateTime
 
-import ru.spbau.jvm.scala.PhonebookSchema._
+import ru.spbau.jvm.scala.phonebook.database.PhonebookSchema._
 import slick.dbio.NoStream
 import slick.jdbc.SQLiteProfile.api._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class PhonebookInterface(val database: Database) {
+class Interface(val database: Database) {
   def getTotal(from: LocalDateTime, to: LocalDateTime): Option[Int] =
     run(callsFromTo(from, to).map(_.cost).sum.result)
 

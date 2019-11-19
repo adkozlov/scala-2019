@@ -1,22 +1,17 @@
-package ru.spbau.jvm.scala
+package ru.spbau.jvm.scala.phonebook
 
 import java.nio.file.Path
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
 import java.time.{DateTimeException, LocalDate, LocalDateTime}
 
+import ru.spbau.jvm.scala.phonebook.database.DatabaseInitializer
+
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 
-// TODO optimize imports
-// TODO remove comments
-// TODO unused queries
-// TODO TODOs
-// TODO make sure every command is implemented
-// TODO tests
-
 object Main {
   private val tablesDirectory = "resources"
-  private val phonebookInterface = PhonebookDatabaseInitializer.getPhonebookInterface(Path.of(tablesDirectory))
+  private val phonebookInterface = DatabaseInitializer.getPhonebookInterface(Path.of(tablesDirectory))
 
   def main(args: Array[String]): Unit = {
     mainLoop()
@@ -59,7 +54,7 @@ object Main {
   }
 
   def printSchema(): Unit = {
-    import PhonebookSchema._
+    import ru.spbau.jvm.scala.phonebook.database.PhonebookSchema._
     tablesAndFiles.foreach(_._1.statements.foreach(println))
   }
 

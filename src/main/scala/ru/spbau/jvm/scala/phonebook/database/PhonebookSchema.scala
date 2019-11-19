@@ -1,7 +1,6 @@
-package ru.spbau.jvm.scala
+package ru.spbau.jvm.scala.phonebook.database
 
 import slick.jdbc.SQLiteProfile.api._
-
 
 object PhonebookSchema {
   class User(tag: Tag) extends Table[(Int, String, String, Int)](tag, "User") {

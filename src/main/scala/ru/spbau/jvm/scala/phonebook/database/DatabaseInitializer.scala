@@ -1,28 +1,23 @@
-package ru.spbau.jvm.scala
+package ru.spbau.jvm.scala.phonebook.database
 
 import java.io.{File, OutputStreamWriter}
 import java.nio.file.Path
 
-import ru.spbau.jvm.scala.PhonebookSchema.tablesAndFiles
-import slick.dbio.{Effect, NoStream}
-import slick.jdbc.SQLiteProfile
-import slick.jdbc.SQLiteProfile.api._
-import slick.jdbc.JdbcActionComponent
-
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
+import slick.jdbc.SQLiteProfile.api._
 
-object PhonebookDatabaseInitializer {
+object DatabaseInitializer {
 
-  def getPhonebookInterface(tablesDirectory: Path): PhonebookInterface = {
+  def getPhonebookInterface(tablesDirectory: Path): Interface = {
     val tempDBFile = createDatabaseFile()
     val db = connectDatabase(tempDBFile)
 
     createDatabaseSchema(db)
     fillDatabase(tablesDirectory, tempDBFile)
 
-    new PhonebookInterface(db)
+    new Interface(db)
   }
 
   private def createDatabaseFile(): String = {
@@ -48,7 +43,7 @@ object PhonebookDatabaseInitializer {
     val process = Runtime.getRuntime.exec(s"sqlite3 $tempDBFile")
     val writer = new OutputStreamWriter(process.getOutputStream)
 
-    val importLines = tablesAndFiles.map(_._2).map(tableName => s".import ${tablesDirectory.resolve(s"$tableName.txt")} $tableName")
+    val importLines = PhonebookSchema.tablesAndFiles.map(_._2).map(tableName => s".import ${tablesDirectory.resolve(s"$tableName.txt")} $tableName")
 
     writer.write(".mode csv\n")
     writer.write(importLines.mkString("\n"))
