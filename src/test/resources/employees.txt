@@ -1,0 +1,16 @@
+John;Doe;0
+Donald;Tusk;2
+Brigitte;Bierlein;4
+Sophie;Wilmès;3
+Mette;Frederiksen;5
+Leo;Varadkar;6
+Antti;Rinne;9
+Xavier;Bettel;8
+Jean-Claude;Juncker;10
+Boris;Johnson;11
+Mark;Rutte;18
+Angela;Merkel;15
+Koen;Lenaerts;16
+Christine;Lagarde;12
+Gaston;Thorn;20
+Person;WithoutCalls;25

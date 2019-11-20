@@ -1,12 +1,14 @@
 package ru.spbau.jvm.scala
 
+import java.io.File
+import java.nio.file.{Path, Paths}
 import java.time.LocalDateTime
 
 import ru.spbau.jvm.scala.CallsDB.{Call, CallDB, EmployeeDB, Event, Name, PhoneNumberDB}
 
 import scala.io.Source
-import scala.util.{Failure, Success, Try, Using}
 import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try, Using}
 
 /**
  * This class provides methods which collect statistics of calls made by Company's employees.
@@ -165,18 +167,18 @@ object CallsDB {
     override val getTime: LocalDateTime = timeStart
   }
 
-  def apply(): CallsDB = {
-    val employeesTry = readFromCSV("employees.txt") { columns =>
+  def apply(dbFolder: File = new File("resources")): CallsDB = {
+    val employeesTry = readFromCSV(new File(dbFolder, "employees.txt")) { columns =>
       val Array(firstName, lastName, numberId) = columns
       EmployeeDB(firstName, lastName, numberId.toInt)
     }
 
-    val numbersTry = readFromCSV("numbers.txt") { columns =>
+    val numbersTry = readFromCSV(new File(dbFolder, "numbers.txt")) { columns =>
       val Array(id, number) = columns
       PhoneNumberDB(id.toInt, number)
     }
 
-    val callsTry = readFromCSV("calls.txt") { columns =>
+    val callsTry = readFromCSV(new File(dbFolder, "calls.txt")) { columns =>
       val Array(fromNumber, toNumber, timeStart, duration, cost) = columns
       CallDB(fromNumber, toNumber, LocalDateTime.parse(timeStart), duration.toInt, cost.toFloat)
     }
@@ -189,8 +191,8 @@ object CallsDB {
     }
   }
 
-  private def readFromCSV[B](fileName: String)(mapFun: Array[String] => B)(implicit c: ClassTag[B]): Try[Array[B]] = {
-    Using(Source.fromFile(s"resources/$fileName")) { file =>
+  private def readFromCSV[B](file: File)(mapFun: Array[String] => B)(implicit c: ClassTag[B]): Try[Array[B]] = {
+    Using(Source.fromFile(file)) { file =>
       file.getLines().map { line =>
         val columns = line.split(";").map(_.trim())
         mapFun(columns)

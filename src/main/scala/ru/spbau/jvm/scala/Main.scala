@@ -9,49 +9,54 @@ import scala.io.StdIn
 import scala.util.{Success, Try}
 
 object Main {
-  private val fromToSubPattern = "(?:\\s+from ([0-9.tT:\\-]+))?(?:\\s+to ([0-9.tT:\\-]+))?"
-  private val nameSubPattern = "\\s+(\\p{L}+)\\s+(\\p{L}+)"
-  private val numberSubPattern = "\\s+(\\+(?:\\s*[0-9])+)"
+  private val FromToSubPattern = "(?:\\s+from ([0-9.tT:\\-]+))?(?:\\s+to ([0-9.tT:\\-]+))?"
+  private val NameSubPattern = "\\s+(\\p{L}+)\\s+(\\p{L}+)"
+  private val NumberSubPattern = "\\s+(\\+(?:\\s*[0-9])+)"
 
-  private val callsPattern = s"calls$fromToSubPattern".r
-  private val avgPattern = s"avg$fromToSubPattern".r
-  private val totalPattern = s"total$fromToSubPattern".r
-  private val numberPattern = s"number$nameSubPattern".r
-  private val employeePattern = s"employee$numberSubPattern".r
-  private val outgoingPattern = s"outgoing$nameSubPattern$fromToSubPattern".r
-  private val incomingPattern = s"incoming$nameSubPattern$fromToSubPattern".r
-  private val helpPattern = "help".r
+  private val CallsPattern = s"calls$FromToSubPattern".r
+  private val AvgPattern = s"avg$FromToSubPattern".r
+  private val TotalPattern = s"total$FromToSubPattern".r
+  private val NumberPattern = s"number$NameSubPattern".r
+  private val EmployeePattern = s"employee$NumberSubPattern".r
+  private val OutgoingPattern = s"outgoing$NameSubPattern$FromToSubPattern".r
+  private val incomingPattern = s"incoming$NameSubPattern$FromToSubPattern".r
+  private val HelpPattern = "help".r
 
-  private val helpFromTo = "[from DATETIME] [to DATETIME]"
-  private val helpName = "FIRST_NAME LAST_NAME"
-  private val helpMessage =
+  private val HelpFromTo = "[from DATETIME] [to DATETIME]"
+  private val HelpName = "FIRST_NAME LAST_NAME"
+  private val HelpMessage =
     s"""
-       |calls $helpFromTo
-       | print all calls which were made during the specified period
+       |calls $HelpFromTo
+       |  print all calls which were made during the specified period
        |
-       |avg $helpFromTo
-       | print the average duration of calls which were made during the specified period
+       |avg $HelpFromTo
+       |  print the average duration of calls which were made during the specified period
        |
-       |total $helpFromTo
-       | print the total cost of calls which were made during the specified period
+       |total $HelpFromTo
+       |  print the total cost of calls which were made during the specified period
        |
-       |number $helpName
-       | print the number that was assigned to the specified employee
+       |number $HelpName
+       |  print the number that was assigned to the specified employee
        |
        |employee PHONE_NUMBER
-       | print the name of the employee that uses the specified phone number
+       |  print the name of the employee that uses the specified phone number
        |
-       |outgoing $helpName $helpFromTo
-       | print all calls which were made by the specified employee during the specified period
+       |outgoing $HelpName $HelpFromTo
+       |  print all calls which were made by the specified employee during the specified period
        |
-       |incoming $helpName $helpFromTo
-       | print all calls which were received by the specified employee during the specified period
+       |incoming $HelpName $HelpFromTo
+       |  print all calls which were received by the specified employee during the specified period
        |
        |help
-       | show help
+       |  show help
+       |-------------------------------------------------------
+       |DATETIME could be presented in three different formats:
+       |02.09.2019
+       |2019-09-02
+       |2019-09-02T10:15:30
        |""".stripMargin
 
-  private val cannotFindEmployee = "Can't find the specified employee"
+  private val CannotFindEmployee = "Can't find the specified employee"
 
   def main(args: Array[String]): Unit = {
     val callsDb = CallsDB()
@@ -61,38 +66,38 @@ object Main {
       val lineOption = Option(StdIn.readLine()).map(_.trim)
 
       val linesToPrint: Option[Seq[String]] = lineOption.map {
-        case callsPattern(from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
+        case CallsPattern(from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
           callsDb.getCalls(timeFrom, timeTo)
             .map(callToString)
         }
-        case avgPattern(from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
+        case AvgPattern(from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
           Seq(callsDb.getAvg(timeFrom, timeTo).toString)
         }
-        case totalPattern(from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
+        case TotalPattern(from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
           Seq(callsDb.getTotal(timeFrom, timeTo).toString)
         }
-        case numberPattern(firstName, lastName) => Seq(
+        case NumberPattern(firstName, lastName) => Seq(
           Try(callsDb.getNumber(Name(firstName, lastName)))
-            .getOrElse(cannotFindEmployee)
+            .getOrElse(CannotFindEmployee)
         )
-        case employeePattern(number) => Try(callsDb.getEmployee(number.trim))
+        case EmployeePattern(number) => Try(callsDb.getEmployee(number.trim))
           .map(_.map(name => s"${name.firstName} ${name.lastName}"))
           .getOrElse(Some("This phone number is not owned by the Company"))
           .orElse(Some("No employee is using that phone number"))
           .toSeq
-        case outgoingPattern(firstName, lastName, from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
+        case OutgoingPattern(firstName, lastName, from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
           val name = Name(firstName, lastName)
           Try(callsDb.getOutgoing(name, timeFrom, timeTo))
             .map(_.map(callToString))
-            .getOrElse(Seq(cannotFindEmployee))
+            .getOrElse(Seq(CannotFindEmployee))
         }
         case incomingPattern(firstName, lastName, from, to) => executeFunctionWithTime(from, to) { (timeFrom, timeTo) =>
           val name = Name(firstName, lastName)
           Try(callsDb.getIncoming(name, timeFrom, timeTo))
             .map(_.map(callToString))
-            .getOrElse(Seq(cannotFindEmployee))
+            .getOrElse(Seq(CannotFindEmployee))
         }
-        case helpPattern() => Seq(helpMessage)
+        case HelpPattern() => Seq(HelpMessage)
         case other => Seq(s"command '$other' not found")
       }
 
