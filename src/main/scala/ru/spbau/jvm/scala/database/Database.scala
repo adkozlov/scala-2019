@@ -57,8 +57,6 @@ case class DbTableTuple(tuple: List[Any]) {
 class DbTableContent(private val content: List[DbTableTuple]) {
   def column(colIdx: Int): Option[List[Any]] = Utils.sequenceOption(content.map(_.tuple.lift(colIdx)))
 
-  // def tuple(rowIdx: Int): Option[List[Any]] = content.lift(rowIdx).map(_.tuple)
-
   def tuples(): Iterator[DbTableTuple] = content.iterator
 
   override def toString: String = content.mkString("\n")

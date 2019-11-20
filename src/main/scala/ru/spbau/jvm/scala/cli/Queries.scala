@@ -93,7 +93,7 @@ class HelpQuery extends Query {
         | - calls [from <date> [to <date>]]                all calls between two dates (optionally)
         | - number <name>                                  find phone number/numbers of a person with the given name
         | - total [from <date> [to <date>]]                total cost of all operations between two dates (optionally)
-        | - message <name> [from <date [to <date>]]        how many messages the person sent and got
+        | - messages <name> [from <date [to <date>]]       how many messages the person sent and got
         | - contact <name> to <name> [from <date> [to <date>]]  number of time when the first person made contact with
         |                                                       the second one
         | - help                                           prints this help
