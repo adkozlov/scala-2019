@@ -1,0 +1,7 @@
+From(minutes),To(minutes)Cost(per minute)
+0,1,1
+1,2,0.9
+2,4,0.85
+4,8,0.8
+8,16,0.75
+16,null,0.7
