@@ -8,7 +8,8 @@ import scala.io.StdIn
 
 class CLI(db: BillingDB) {
 
-  private val commands = ListBuffer(new NumberCommand, new TotalCommand, new AvgCommand, new CallsCommand)
+  private val commands = ListBuffer(new NumberCommand, new TotalCommand, new AvgCommand,
+    new CallsCommand, new CheapestCallCommand, new LongestCallCommand, new UserWithMostCalls)
   val help = new HelpCommand(commands)
   commands += help
 
