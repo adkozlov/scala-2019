@@ -66,12 +66,12 @@ class DatabaseTest extends FlatSpec {
   "FoldColumns" should "fold two values of two corresponding columns into one value!" in {
     // Useless exmaple, just for testing.
     val header = DbAttributeHeader("TotalUseless", DbTypeInt)
-    val res = scheme.table("EmployeePhoneNumber").foldColumns("EmpID", "PhoneID", header, (a: Int, b: Int) => a + b)
+    val res = scheme.table("EmployeePhoneNumbers").foldColumns("EmpID", "PhoneID", header, (a: Int, b: Int) => a + b)
     assert(res.column("TotalUseless") == List(0, 1, 3))
   }
 
   "Join" should "join two columns" in {
-    val empPnTab = scheme.joinOwn("Employees", "EmployeePhoneNumber", "EmpID", "EmpID")
+    val empPnTab = scheme.joinOwn("Employees", "EmployeePhoneNumbers", "EmpID", "EmpID")
 
     val expectedHeader = DbTableHeader(List(DbAttributeHeader("EmpID", DbTypeInt),
       DbAttributeHeader("FirstName", DbTypeString),

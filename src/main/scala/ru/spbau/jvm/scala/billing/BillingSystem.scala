@@ -6,7 +6,7 @@ import java.util.Date
 import ru.spbau.jvm.scala.cli.{DateRange, PersonName}
 import ru.spbau.jvm.scala.database._
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 case class SmsStat(sentCount: Int, gotCount: Int)
 
@@ -96,18 +96,22 @@ class BillingSystem(private val databaseFiles: List[File]) {
 
   def messages(person: PersonName, dateRange: DateRange): SmsStat = {
     val empId = selectPerson(person).column("EmpID").head
-    val tabSent =
-      selectDate(dateRange, scheme.joinOwn(EmployeePhoneNumbers, PhoneOperations, "PhoneID", "PhoneID")
-        .select("OpType", "SMS"))
-    val sentSms = tabSent.select("EmpID", empId).column("EmpID").length
-
-    val tabGot =
-      selectDate(dateRange, scheme.joinOwn(EmployeePhoneNumbers, PhoneOperations, "PhoneID", "DestPhoneID")
-        .select("OpType", "SMS"))
-    val gotSms = tabGot.select("EmpID", empId).column("EmpID").length
+    val sentSms = messageCount(empId, dateRange, "PhoneID")
+    val gotSms = messageCount(empId, dateRange, "DestPhoneID")
 
     SmsStat(sentSms, gotSms)
   }
+
+  private def messageCount(empId: Any, dateRange: DateRange, column: String): Int = {
+    val tabGot =
+      selectDate(dateRange, scheme.joinOwn(EmployeePhoneNumbers, PhoneOperations, "PhoneID", column)
+        .select("OpType", "SMS"))
+    Try(tabGot.select("EmpID", empId).column("EmpID").length) match {
+      case Failure(_) => 0
+      case Success(l) => l
+    }
+  }
+
 
   def total(dateRange: DateRange): Float = {
     selectDate(dateRange, scheme.joinOwn(PhoneOperations, Tariffs, "PhoneID", "PhoneID"))
