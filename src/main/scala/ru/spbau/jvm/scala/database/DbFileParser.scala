@@ -56,7 +56,7 @@ object DbFileParser {
       case DbTypeInt => value.trim().toInt
       case DbTypeFloat => value.trim().toFloat
       case DbTypeString => value
-      // TODO: date format is *very* specific. Need to do something with it!
+      // Date format is *very* specific, but what else can I do?
       case DbTypeDate => new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(value)
     })
 

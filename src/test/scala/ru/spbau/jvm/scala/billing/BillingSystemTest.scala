@@ -31,7 +31,6 @@ class BillingSystemTest extends FlatSpec {
     assertThrows[BillingSystemEmptyDateRangeException](billingSystem.avgDuration(badRange))
   }
 
-
   "avg cost" should "pass" in {
     assert(billingSystem.avgCost(noneRange) == 20.0)
   }
@@ -83,7 +82,6 @@ class BillingSystemTest extends FlatSpec {
     assert(billingSystem.calls(DateRange(Some(dateFrom), Some(dateTo))) == expected)
   }
 
-
   /*
    * total [from <date-from> [<date-to>]] -- total cost
    */
@@ -122,7 +120,6 @@ class BillingSystemTest extends FlatSpec {
     assertThrows[BillingSystemEmptyDateRangeException](billingSystem.messages(johnDoe, badRange))
   }
 
-
   /*
    * contacts <name> to <name> [from <date-from [to <date-to>]] -- count of contacts between two people
    */
@@ -139,9 +136,7 @@ class BillingSystemTest extends FlatSpec {
     assertThrows[BillingSystemPersonNotFoundException](billingSystem.contact(johnDoe, noOne, noneRange))
   }
 
-  "contaces with strange range" should "fail" in {
+  "contacts with strange range" should "fail" in {
     assertThrows[BillingSystemEmptyDateRangeException](billingSystem.contact(johnDoe, martingKing, badRange))
   }
-
-
 }
