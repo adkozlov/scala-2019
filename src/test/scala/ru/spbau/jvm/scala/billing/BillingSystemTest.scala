@@ -11,26 +11,35 @@ class BillingSystemTest extends FlatSpec {
   private val testFiles = Utils.getTxtFilesFromDirectory(testDbPath)
   private val billingSystem = new BillingSystem(testFiles)
 
+  private val dateParser = new SimpleDateFormat("yyyy-MM-dd HH:mm")
   private val noneRange = DateRange()
+  private val badRange = DateRange(Some(dateParser.parse("2019-11-01 18:00")),
+    Some(dateParser.parse("2019-11-01 11:00")))
+
   private val johnDoe = PersonName("John", "Doe")
   private val martingKing = PersonName("Martin", "King")
-  private val dateParser = new SimpleDateFormat("yyyy-MM-dd HH:mm")
+  private val noOne = PersonName("No", "One")
 
   /*
    * avg [duration | cost] [from <date> [<date-to>]] -- add average call cost
    */
-  "avg duration" should "do smth" in {
+  "avg duration" should "pass" in {
     assert(billingSystem.avgDuration(noneRange) == 10)
   }
 
-  "avg cost" should "do smth" in {
+  "avg duration with strange range" should "fail" in {
+    assertThrows[BillingSystemEmptyDateRangeException](billingSystem.avgDuration(badRange))
+  }
+
+
+  "avg cost" should "pass" in {
     assert(billingSystem.avgCost(noneRange) == 20.0)
   }
 
   /*
    * calls [from <date-from> [<date-to>]] -- all calls
    */
-  "calls" should "do smth" in {
+  "calls" should "pass" in {
     val expected =
       List(List("John", "Doe", "+79000000001", 10, 20.0),
         List("John", "Doe", "+79000000002", 10, 20.0),
@@ -38,6 +47,10 @@ class BillingSystemTest extends FlatSpec {
         List("John", "Doe", "+79000000002", 10, 20.0))
 
     assert(billingSystem.calls(noneRange) == expected)
+  }
+
+  "calls with strange range" should "fail" in {
+    assertThrows[BillingSystemEmptyDateRangeException](billingSystem.calls(badRange))
   }
 
   "`calls` from date" should "pass" in {
@@ -74,30 +87,61 @@ class BillingSystemTest extends FlatSpec {
   /*
    * total [from <date-from> [<date-to>]] -- total cost
    */
-  "total" should "do smth" in {
+  "total" should "pass" in {
     assert(billingSystem.total(noneRange) == 83.0)
+  }
+
+  "total with strange range" should "fail" in {
+    assertThrows[BillingSystemEmptyDateRangeException](billingSystem.total(badRange))
   }
 
   /*
    * number <first-name> <last-name> -- number of an employee <first-name> <last-name>
    */
-  "number" should "do smth" in {
+  "number" should "pass" in {
     assert(billingSystem.number(johnDoe) == List("+79000000000", "+79000000001"))
   }
 
+  "number of No One" should "fail" in {
+    assertThrows[BillingSystemPersonNotFoundException](billingSystem.number(noOne))
+  }
+
   /*
-   * messages [from <date-from> [<date-to>]] -- all messages
+   * messages <person> [from <date-from> [<date-to>]] -- all messages
    */
-  "messages" should "do smth" in {
+  "messages" should "pass" in {
     assert(billingSystem.messages(johnDoe, noneRange) == SmsStat(0, 1))
     assert(billingSystem.messages(martingKing, noneRange) == SmsStat(1, 0))
   }
 
+  "messages of No One" should "fail" in {
+    assertThrows[BillingSystemPersonNotFoundException](billingSystem.messages(noOne, noneRange))
+  }
+
+  "messages with strange range" should "fail" in {
+    assertThrows[BillingSystemEmptyDateRangeException](billingSystem.messages(johnDoe, badRange))
+  }
+
+
   /*
    * contacts <name> to <name> [from <date-from [to <date-to>]] -- count of contacts between two people
    */
-  "contacts" should "do smth" in {
+  "contacts" should "pass" in {
     assert(billingSystem.contact(johnDoe, martingKing, noneRange) == 2)
     assert(billingSystem.contact(martingKing, johnDoe, noneRange) == 1)
   }
+
+  "contacts of No One with someone" should "fail" in {
+    assertThrows[BillingSystemPersonNotFoundException](billingSystem.contact(noOne, johnDoe, noneRange))
+  }
+
+  "contacts of someone with NoOne" should "fail" in {
+    assertThrows[BillingSystemPersonNotFoundException](billingSystem.contact(johnDoe, noOne, noneRange))
+  }
+
+  "contaces with strange range" should "fail" in {
+    assertThrows[BillingSystemEmptyDateRangeException](billingSystem.contact(johnDoe, martingKing, badRange))
+  }
+
+
 }
