@@ -1,0 +1,3 @@
+EmpID(int),FirstName(string),LastName(string)
+0,John,Doe
+1,Martin,King

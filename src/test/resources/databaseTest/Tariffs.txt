@@ -1,0 +1,7 @@
+PhoneID(int),TariffType(string),Cost(float)
+0,CALL,2
+0,SMS,3
+1,CALL,2
+1,SMS,3
+2,CALL,2
+2,SMS,3

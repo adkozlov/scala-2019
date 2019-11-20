@@ -1,0 +1,6 @@
+PhoneID(int),DestPhoneID(int),Date(date),OpType(string),Duration(int)
+0,1,2019-11-01 12:00,CALL,10
+0,2,2019-11-01 15:00,CALL,10
+0,1,2019-11-01 16:00,CALL,10
+1,2,2019-11-01 13:00,CALL,10
+2,0,2019-11-01 10:00,SMS,1
