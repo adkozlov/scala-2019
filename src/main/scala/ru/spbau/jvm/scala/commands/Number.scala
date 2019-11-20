@@ -7,7 +7,7 @@ object Number extends Command {
   override val help: String = "номера телефонов заданного сотрудника"
 
   override def execute(database: BillingDatabase, args: Array[String]): String =
-    //TODO pretty print
-    database.userPhone(ParserUtil.parseUser(args)).toString
-
+    database.userPhone(ParserUtil.parseUser(args))
+      .map(_.map(_.value)).map(_.mkString("\n"))
+      .getOrElse("USER NOT FOUND")
 }

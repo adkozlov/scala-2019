@@ -8,8 +8,15 @@ object Calls extends Command {
 
   override def execute(database: BillingDatabase, args: Array[String]): String = {
     val interval = ParserUtil.parseInterval(args)
-    //TODO pretty print
-    database.callsInInterval(interval._1, interval._2).toString
+    database.callsInInterval(interval._1, interval._2)
+      .map { case (user, phone, sec, cost) =>
+        s"${user.map(_.firstName).getOrElse("UNKNOWN")} | " +
+          s"${user.map(_.lastName).getOrElse("UNKNOWN")} | " +
+          s"${phone.map(_.value).getOrElse("UNKNOWN")} | " +
+          s"$sec | " +
+          s"${cost.map(_.toString).getOrElse("UNKNOWN")}"
+      }
+      .mkString("\n")
   }
 
 }

@@ -10,6 +10,9 @@ object Actions extends Command {
     val user = ParserUtil.parseUser(args.take(2))
     val interval = ParserUtil.parseInterval(args.drop(2))
     // TODO pretty print
-    database.userActions(user, interval._1, interval._2).toString
+    database.userActions(user, interval._1, interval._2)
+      .map(_.map { action => s"${action.date.toString} | ${action.operationId}" })
+      .map(_.mkString("\n"))
+      .getOrElse("USER NOT FOUND")
   }
 }
