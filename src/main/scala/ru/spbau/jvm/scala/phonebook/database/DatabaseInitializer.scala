@@ -1,15 +1,16 @@
 package ru.spbau.jvm.scala.phonebook.database
 
-import java.io.{File, OutputStreamWriter}
+import java.io.{File, IOException, OutputStreamWriter}
 import java.nio.file.Path
+
+import slick.jdbc.SQLiteProfile.api._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-import slick.jdbc.SQLiteProfile.api._
-
 object DatabaseInitializer {
 
+  @throws[IOException]("if sqlite3 is not installed or other IO problems occur")
   def getPhonebookInterface(tablesDirectory: Path): Interface = {
     val tempDBFile = createDatabaseFile()
     val db = connectDatabase(tempDBFile)
@@ -39,6 +40,7 @@ object DatabaseInitializer {
     )), Duration.Inf)
   }
 
+  @throws[IOException]
   private def fillDatabase(tablesDirectory: Path, tempDBFile: String): Unit = {
     val process = Runtime.getRuntime.exec(s"sqlite3 $tempDBFile")
     val writer = new OutputStreamWriter(process.getOutputStream)

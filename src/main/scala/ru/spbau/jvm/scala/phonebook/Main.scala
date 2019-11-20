@@ -1,20 +1,30 @@
 package ru.spbau.jvm.scala.phonebook
 
+import java.io.IOException
 import java.nio.file.Path
 import java.time.format.{DateTimeFormatter, DateTimeParseException}
 import java.time.{DateTimeException, LocalDate, LocalDateTime}
 
-import ru.spbau.jvm.scala.phonebook.database.DatabaseInitializer
+import ru.spbau.jvm.scala.phonebook.database.{DatabaseInitializer, Interface}
 
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 
 object Main {
   private val tablesDirectory = "resources"
-  private val phonebookInterface = DatabaseInitializer.getPhonebookInterface(Path.of(tablesDirectory))
+  private val phonebookInterface: Interface =
+    try {
+      DatabaseInitializer.getPhonebookInterface(Path.of(tablesDirectory))
+    } catch {
+      case e: IOException =>
+        println("An error while trying to initialize database. Do you have sqlite3 installed?")
+        println(e)
+        null
+    }
 
   def main(args: Array[String]): Unit = {
-    mainLoop()
+    if (phonebookInterface != null)
+      mainLoop()
   }
 
   def mainLoop(): Unit = {
