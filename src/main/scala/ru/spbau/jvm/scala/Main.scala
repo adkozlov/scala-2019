@@ -3,7 +3,7 @@ package ru.spbau.jvm.scala
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import ru.spbau.jvm.scala.Patterns._
+import Patterns._
 
 import scala.collection.immutable.HashMap
 import scala.io.{Source, StdIn}
