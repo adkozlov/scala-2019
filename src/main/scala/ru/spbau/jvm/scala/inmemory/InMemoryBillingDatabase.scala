@@ -43,7 +43,7 @@ class InMemoryBillingDatabase(val users: TableWithId[User],
 
   def avgCallsDuration: Double = {
     val calls = actionsInInterval(Set(0, 1), LocalDateTime.MIN, LocalDateTime.MAX)
-    calls.view.mapValues { action: Action => action.count }.keys
+    calls.values.map { action: Action => action.count }
       .foldLeft((0.0, 1))((acc, i) => (acc._1 + (i - acc._1) / acc._2, acc._2 + 1))._1
   }
 
