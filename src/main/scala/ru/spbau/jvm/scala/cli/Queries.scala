@@ -38,11 +38,9 @@ class CallQuery(private val dateRange: DateRange) extends Query {
 class MessageQuery(private val person: PersonName,
                    private val dateRange: DateRange) extends Query {
   override def execute(context: BillingSystem): Unit = {
-    try {
-      val stat = context.messages(person, dateRange)
-      println(s"Sent: ${stat.sentCount} SMS")
-      println(s"Got: ${stat.gotCount} SMS")
-    }
+    val stat = context.messages(person, dateRange)
+    println(s"Sent: ${stat.sentCount} SMS")
+    println(s"Got: ${stat.gotCount} SMS")
   }
 }
 
