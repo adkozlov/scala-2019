@@ -51,10 +51,10 @@ object Database {
     calls.filter(filterDate(fromDate, toDate))
 
   def getAverageDuration: Double =
-    calls.map(call => call.duration).sum.toDouble / calls.length
+    calls.map(_.duration).sum.toDouble / calls.length
 
   def getTotalCost(fromDate: Date, toDate: Date): Double =
-    calls.filter(filterDate(fromDate, toDate)).map(call => call.cost).sum
+    calls.filter(filterDate(fromDate, toDate)).map(_.cost).sum
 
   def getEmployeeNumber(firstName: String, lastName: String): String =
     numberFromUser.getOrElse((firstName, lastName), null)
@@ -66,6 +66,5 @@ object Database {
     calls.filter(call => call.fromUser != null && call.toUser != null)
 
   def getSpender: (User, Double) =
-    calls.groupBy(call =>
-      call.fromUser).map({case (user: User, calls: Array[Call]) => (user, calls.map(_.cost).sum) }).toArray.maxBy(_._2)
+    calls.groupBy(_.fromUser).map({case (user: User, calls: Array[Call]) => (user, calls.map(_.cost).sum) }).toArray.maxBy(_._2)
 }

@@ -30,7 +30,7 @@ object Main {
     val number: String = Database.getEmployeeNumber(firstName, lastName)
     number match {
       case null => printf("employee '%s %s' not found\n", firstName, lastName)
-      case _ => println(number)
+      case _    => println(number)
     }
   }
 
@@ -64,16 +64,16 @@ object Main {
     while (true) {
       val input = scala.io.StdIn.readLine()
       input match {
-        case callsPattern(fromDate, toDate) => calls(Database.dateFormat.parse(fromDate), Database.dateFormat.parse(toDate))
-        case avgPattern() => avg()
-        case totalPattern(fromDate, toDate) => total(Database.dateFormat.parse(fromDate), Database.dateFormat.parse(toDate))
-        case numberPattern(firstName, lastName) => number(firstName, lastName)
+        case callsPattern(fromDate, toDate)      => calls(Database.dateFormat.parse(fromDate), Database.dateFormat.parse(toDate))
+        case avgPattern()                        => avg()
+        case totalPattern(fromDate, toDate)      => total(Database.dateFormat.parse(fromDate), Database.dateFormat.parse(toDate))
+        case numberPattern(firstName, lastName)  => number(firstName, lastName)
         case callsByPattern(firstName, lastName) => callsBy(firstName, lastName)
-        case innerPattern() => inner()
-        case spenderPattern() => spender()
-        case helpPattern() => help()
-        case exitPattern() => return
-        case _ => printf("command '%s' not found\n", input)
+        case innerPattern()                      => inner()
+        case spenderPattern()                    => spender()
+        case helpPattern()                       => help()
+        case exitPattern()                       => return
+        case _                                   => printf("command '%s' not found\n", input)
       }
     }
   }
