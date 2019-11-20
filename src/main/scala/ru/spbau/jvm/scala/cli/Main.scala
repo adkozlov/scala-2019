@@ -8,7 +8,7 @@ import scala.io.Source
 object Main {
   def main(args: Array[String]): Unit = {
     try {
-      val databaseFiles = Utils.getTxtFilesFromDirectory("resources/database2")
+      val databaseFiles = Utils.getTxtFilesFromDirectory("resources/database")
       val billingSystem = new BillingSystem(databaseFiles)
       Repl.process(billingSystem, Source.stdin)
     } catch {
