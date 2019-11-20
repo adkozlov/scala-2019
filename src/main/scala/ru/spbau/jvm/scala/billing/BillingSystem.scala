@@ -33,6 +33,7 @@ Queries:
 * help -- print help
 */
 class BillingSystem(private val databaseFiles: List[File]) {
+  // List of all tables to avoid typos.
   private val Employees = "Employees"
   private val EmployeePhoneNumbers = "EmployeePhoneNumbers"
   private val PhoneNumbersPool = "PhoneNumbersPool"

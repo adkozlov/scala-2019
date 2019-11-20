@@ -9,6 +9,13 @@ import ru.spbau.jvm.scala.utils.Utils
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
 
+/*
+ * Parse a database from given files.
+ *
+ * Database is a list of CSV files. Each file is a table. Name of the table is its file name.
+ * A header of a column in a table has format "<Field>(<type>)", where <Field> is an attribute name and <type> is an
+ * attribute domain.
+ */
 object DbFileParser {
   def apply(paths: List[File]): Try[DbScheme] = {
     Utils.sequenceTry(paths map { fileName => parseDbName(fileName.getName) }) flatMap { tableNames =>
