@@ -15,11 +15,11 @@ class TableActionTests extends FlatSpec with Matchers {
       "9 | 83416555098").mkString("\n"))
   }
 
-  "data, operation:" should "{PhoneID, Callee, Description}" in {
-    val res: String = db.data.getActionTable().filterCols(List("Start", "Finish"))
+  "data, operation:" should "{PhoneID | Callee | Description}" in {
+    val res: String = db.data.getActionTable().filterCols(List("Start", "Finish"), x => !x)
       .select("OperationType", (x: String) => {x.toInt == 0 || x.toInt == 2})
       .joinBy(db.operation.getActionTable(), "OperationType")
-      .filterCols(List("OperationType", "Cost"))
+      .filterCols(List("OperationType", "CostPerMinute($)"), x => !x)
       .getStr()
     res should be(List(
       "PhoneID | Callee | Description",
@@ -30,10 +30,10 @@ class TableActionTests extends FlatSpec with Matchers {
       "5 | 86718740469 | out_sms").mkString("\n"))
   }
 
-  "usedPhone, employee: " should "{EmployeeID, PhoneID, Name, LastName}" in {
+  "usedPhone, employee: " should "{EmployeeID | PhoneID | Name | LastName}" in {
     val res: String = db.usedPhone.getActionTable()
       .joinBy(db.employee.getActionTable(), "EmployeeID")
-      .filterCols(List("UsingStart", "IsAlive"))
+      .filterCols(List("UsingStart", "IsAlive"), x => !x)
       .select("PhoneID", (x: String) => {x.toInt < 3})
       .getStr()
     res should be(List("EmployeeID | PhoneID | Name | LastName",

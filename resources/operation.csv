@@ -1,4 +1,4 @@
-OperationType,Description,Cost
+OperationType,Description,CostPerMinute($)
 0,out_call,1
 1,in_call,0
 2,out_sms,2
