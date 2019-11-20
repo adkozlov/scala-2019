@@ -44,45 +44,37 @@ object Main {
     numbersByNames = employees.map(it => ((it.name, it.surname), it.number)).toMap
   }
 
-  def printCalls(from: Date, to: Date): Unit = {
-    println("FirstName | LastName | Callee | Duration (s) | Cost ($)")
-    calls.filter(dateFilter(from, to)).foreach(call => {
-      val (name, surname) = namesByNumbers(call.callerNumber)
-      println(s"$name | $surname | ${call.calleeNumber} | ${call.duration} | ${call.cost}")
-    })
+  def getCalls(from: Date, to: Date): Array[Call] = {
+    calls.filter(dateFilter(from, to))
   }
 
-  def printAvg(): Unit = {
-    println(calls.map(it => it.duration).sum.toDouble / calls.length + "s")
+  def getAvg: Double = {
+    calls.map(it => it.duration).sum.toDouble / calls.length
   }
 
-  def printTotal(from: Date = format.parse("01.01.0000"), to: Date = format.parse("31.12.9999")): Unit = {
-    println(calls.filter(dateFilter(from, to)).map(it => it.cost).sum)
+  def getTotal(from: Date = format.parse("01.01.0000"), to: Date = format.parse("31.12.9999")): Double = {
+    calls.filter(dateFilter(from, to)).map(it => it.cost).sum
   }
 
-  private def getTotalBy(name: String, surname: String): Double = {
+  def getTotalBy(name: String, surname: String): Double = {
     calls.filter(call => call.callerNumber == numbersByNames((name, surname))).map(it => it.cost).sum
   }
 
-  def printTotalBy(name: String, surname: String): Unit = {
-    println(getTotalBy(name, surname))
-  }
-
-  def printMaxTotal(): Unit = {
+  def getMaxTotal: String = {
     val (name, surname) = employees.map(it => (it.name, it.surname)).maxBy(it => getTotalBy(it._1, it._2))
-    println(s"$name $surname")
+    s"$name $surname"
   }
 
-  def printNumber(name: String, surname: String): Unit = {
-    println(numbersByNames.getOrElse((name, surname), s"employee '$name $surname' not found"))
+  def getNumber(name: String, surname: String): String = {
+    numbersByNames.getOrElse((name, surname), s"employee '$name $surname' not found")
   }
 
-  def printName(number: String): Unit = {
+  def getName(number: String): String = {
     if (namesByNumbers.contains(number)) {
       val (name, surname) = namesByNumbers(number)
-      println(s"$name $surname")
+      s"$name $surname"
     } else {
-      println(s"number '$number' not found")
+      s"number '$number' not found"
     }
   }
 
@@ -109,15 +101,20 @@ object Main {
       val command = StdIn.readLine()
 
       command match {
-        case calls(from, to) => printCalls(format.parse(from), format.parse(to))
-        case avg() => printAvg()
-        case totalFromTo(from, to) => printTotal(format.parse(from), format.parse(to))
-        case totalFrom(from) => printTotal(format.parse(from))
-        case total() => printTotal()
-        case totalBy(name, surname) => printTotalBy(name, surname)
-        case maxTotal() => printMaxTotal()
-        case number(name, surname) => printNumber(name, surname)
-        case name(number) => printName(number)
+        case calls(from, to) =>
+          println("FirstName | LastName | Callee | Duration (s) | Cost ($)")
+          getCalls(format.parse(from), format.parse(to)).foreach(call => {
+            val (name, surname) = namesByNumbers(call.callerNumber)
+            println(s"$name | $surname | ${call.calleeNumber} | ${call.duration} | ${call.cost}")
+          })
+        case avg() => println(s"${getAvg}s")
+        case totalFromTo(from, to) => println(getTotal(format.parse(from), format.parse(to)))
+        case totalFrom(from) => println(getTotal(format.parse(from)))
+        case total() => println(getTotal())
+        case totalBy(name, surname) => println(getTotalBy(name, surname))
+        case maxTotal() => println(getMaxTotal)
+        case number(name, surname) => println(getNumber(name, surname))
+        case name(number) => println(getName(number))
         case help() => printHelp()
         case exit() => break
         case _ => println(s"command '$command' not found")
