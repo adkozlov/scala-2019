@@ -35,7 +35,9 @@ object DbFileParser {
   }
 
   private def parseDbFileFromCsv(csv: SimpleCsv): Try[DbTable] = {
-    val dbHeadersT = csv.header.map(parseDbAttributeHeaderFromCsv)
+    val dbHeadersT = csv.header map {
+      parseDbAttributeHeaderFromCsv
+    }
     Utils.sequenceTry(dbHeadersT) flatMap { dbHeaders =>
       parseDbContent(dbHeaders, csv.content) map { dbContent =>
         new DbTable(
@@ -46,7 +48,9 @@ object DbFileParser {
   }
 
   private def parseDbContent(dbHeaders: List[DbAttributeHeader], content: List[List[String]]): Try[DbTableContent] = {
-    Utils.sequenceTry(content.map(parseDbTuple(dbHeaders, _))) map { dbContent =>
+    Utils.sequenceTry(content map {
+      parseDbTuple(dbHeaders, _)
+    }) map { dbContent =>
       new DbTableContent(dbContent)
     }
   }

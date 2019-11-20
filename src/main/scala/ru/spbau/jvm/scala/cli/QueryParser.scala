@@ -80,6 +80,7 @@ object QueryParser {
       case _ => Failure(new QueryParserFormatException("contact"))
     }
   }
+
 }
 
 object DateRangeParser {
