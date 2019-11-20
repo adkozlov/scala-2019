@@ -1,0 +1,8 @@
+EmpID(int),FirstName(string),LastName(string)
+0,John,Doe
+1,Frodo,Baggins
+2,Richard,Feynman
+3,Igor,Zhirkov
+4,Donald,Knuth
+5,Ilya,Ilf
+6,Akutagawa,Ryunosuke
