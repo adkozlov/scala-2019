@@ -1,0 +1,7 @@
+0,Sasha,Gladkov
+1,Dima,Ivanov
+2,Enot,Enotov
+3,Anton,Zaytsev
+4,Andrey,Popov
+5,Timofey,Bryksin
+6,Leonid,Semenov
