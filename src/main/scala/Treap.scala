@@ -2,7 +2,7 @@ import java.util
 
 import scala.util.Random
 
-case class Node[T <: Ordered[T]] (
+class Node[T <: Ordered[T]] (
     var priority: Int,
     var key: T,
     var value: Int
@@ -92,14 +92,8 @@ class Treap[T <: Ordered[T]](
       * */
     def |(that: Treap[T]): Treap[T] = {
         val union = new Treap[T]
-        this.foreach(key => {
-            val k = this.get(key)
-            union.put(key, this.get(key))
-        })
-        that.foreach(key => {
-            println(s"key = $key put value = ${union.get(key) + that.get(key)}")
-            union.put(key, union.get(key) + that.get(key))
-        })
+        this.foreach(key => union.put(key, this.get(key)))
+        that.foreach(key => union.put(key, union.get(key) + that.get(key)))
         union
     }
 
@@ -164,7 +158,7 @@ class Treap[T <: Ordered[T]](
       * @return the root node of the tree occurred by
       * cutting the smallest key in the tree
       * */
-    def cutLowest(v: Option[Node[T]]): Option[Node[T]] = {
+    private def cutLowest(v: Option[Node[T]]): Option[Node[T]] = {
         if (v.isEmpty) {
             return v
         }
