@@ -1,3 +1,5 @@
+import java.util
+
 import scala.util.Random
 
 case class Node[T <: Ordered[T]] (
@@ -24,7 +26,7 @@ class Treap[T <: Ordered[T]](
             return
         }
         recursiveForeach(v.get.left, f)
-        f(v.get.value)
+        f(v.get.key)
         recursiveForeach(v.get.right, f)
     }
 
@@ -44,15 +46,60 @@ class Treap[T <: Ordered[T]](
         filtered
     }
 
+    final def withFilter(p: T => Boolean): Treap[T] = {
+        val buffer: util.ArrayList[(T, Int)] = new util.ArrayList[(T, Int)]
+        foreach(key => if (p(key)) buffer.add((key, get(key))))
+        root = Option.empty[Node[T]]
+        for (i <- 0 until buffer.size()) {
+            val (key, value) = buffer.get(i)
+            put(key, value)
+        }
+        this
+    }
+
+    /**
+      * Finds intersection i.e. creates new
+      * multiset which will contain all keys
+      * presented in both trees.
+      * Values will be the sum of values in
+      * trees.
+      *
+      * @param that is the tree to be intersected with this tree
+      *
+      * @return created tree
+      * */
     def &(that: Treap[T]): Treap[T] = {
         val intersection = new Treap[T]
-        foreach(key => intersection.put(key, Math.min(this.get(key), that.get(key))))
+        this.foreach(key => {
+            val count = that.get(key)
+            if (count > 0) {
+                intersection.put(key, this.get(key) + count)
+            }
+        })
         intersection
     }
 
+    /**
+      * Finds union i.e. creates new
+      * multiset which will contain all keys
+      * presented in at least one tree.
+      * Values will be the sum of values in
+      * trees.
+      *
+      * @param that is the tree to be merged with this tree
+      *
+      * @return created tree
+      * */
     def |(that: Treap[T]): Treap[T] = {
         val union = new Treap[T]
-        foreach(key => union.put(key, Math.max(this.get(key), that.get(key))))
+        this.foreach(key => {
+            val k = this.get(key)
+            union.put(key, this.get(key))
+        })
+        that.foreach(key => {
+            println(s"key = $key put value = ${union.get(key) + that.get(key)}")
+            union.put(key, union.get(key) + that.get(key))
+        })
         union
     }
 
@@ -65,14 +112,14 @@ class Treap[T <: Ordered[T]](
     def put(key: T, value: Int): Unit = {
         val v = lowerBound(root, key)
         if (value <= 0) {
-            if (v.isDefined) {
+            if (v.isDefined && v.get.key == key) {
                 var (l, r) = split(root, key)
                 r = cutLowest(r)
                 root = merge(l, r)
             }
             return
         }
-        if (v.isDefined) {
+        if (v.isDefined && v.get.key == key) {
             v.get.value = value
             return
         }
