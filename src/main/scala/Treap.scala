@@ -3,10 +3,10 @@ import scala.util.Random
 case class Node[T <: Ordered[T]] (
     var priority: Int,
     var key: T,
+    var value: Int
 ) {
     var left: Option[Node[T]] = Option.empty[Node[T]]
     var right: Option[Node[T]] = Option.empty[Node[T]]
-    var value = 1
 }
 
 class Treap[T <: Ordered[T]](
@@ -19,37 +19,82 @@ class Treap[T <: Ordered[T]](
         add(x)
     }
 
+    private def recursiveForeach(v: Option[Node[T]], f: T => Unit): Unit = {
+        if (v.isEmpty) {
+            return
+        }
+        recursiveForeach(v.get.left, f)
+        f(v.get.value)
+        recursiveForeach(v.get.right, f)
+    }
+
+    def foreach(f: T => Unit): Unit = {
+        recursiveForeach(root, f)
+    }
+
+    final def map[Q <: Ordered[Q]](f: T => Q): Treap[Q] = {
+        val mapped = new Treap[Q]
+        foreach(key => mapped.add(f(key)))
+        mapped
+    }
+
+    final def filter(p: T => Boolean): Treap[T] = {
+        val filtered = new Treap[T]
+        foreach(key => if (p(key)) filtered.add(key))
+        filtered
+    }
+
+    def &(that: Treap[T]): Treap[T] = {
+        val intersection = new Treap[T]
+        foreach(key => intersection.put(key, Math.min(this.get(key), that.get(key))))
+        intersection
+    }
+
+    def |(that: Treap[T]): Treap[T] = {
+        val union = new Treap[T]
+        foreach(key => union.put(key, Math.max(this.get(key), that.get(key))))
+        union
+    }
+
+    /**
+      * Puts the given value to the given key.
+      * If values is less than of equal to zero
+      * then nothing given element will be completely
+      * erased from the multiset
+      * */
+    def put(key: T, value: Int): Unit = {
+        val v = lowerBound(root, key)
+        if (value <= 0) {
+            if (v.isDefined) {
+                var (l, r) = split(root, key)
+                r = cutLowest(r)
+                root = merge(l, r)
+            }
+            return
+        }
+        if (v.isDefined) {
+            v.get.value = value
+            return
+        }
+        val (l, r) = split(root, key)
+        val add = Option.apply(new Node[T](generator.nextInt(Int.MaxValue), key, value))
+        root = merge(merge(l, add), r)
+    }
+
     /**
       * Adds the element x to the multiset
       * */
     def add(x: T): Unit = {
-        val v = lowerBound(root, x)
-        if (v.isDefined) {
-            v.get.value += 1
-            return
-        }
-        val (l, r) = split(root, x)
-        val add = Option.apply(new Node[T](generator.nextInt(Int.MaxValue), x))
-        root = merge(merge(l, add), r)
+        put(x, get(x) + 1)
     }
 
     /**
       * Removes the element from the set.
       * If there was no such an element in the multiset
-      * than nothing will happen
+      * then nothing will happen
       * */
     def remove(x: T): Unit = {
-        val v = lowerBound(root, x)
-        if (v.isEmpty) {
-            return
-        }
-        v.get.value -= 1
-        if (v.get.value > 0) {
-            return
-        }
-        var (l, r) = split(root, x)
-        r = cutLowest(r)
-        root = merge(l, r)
+        put(x, get(x) - 1)
     }
 
     /**
@@ -65,7 +110,7 @@ class Treap[T <: Ordered[T]](
 
     /**
       * Cuts the lowest key in the given tree.
-      * If the tree is empty than nothing will happen
+      * If the tree is empty then nothing will happen
       *
       * @param v is the root node of the given tree
       *
@@ -139,7 +184,7 @@ class Treap[T <: Ordered[T]](
 
     /**
       * Splits the tree v by delimiter x in such a way that
-      * left part will contain all keys which are less then x
+      * left part will contain all keys which are less than x
       * and right part will contain all keys which are greater or equal to x
       *
       * @param v is the tree to be splitted
