@@ -59,7 +59,7 @@ abstract class Treap[+K] {
 
   def insert[M >: K](key: M)(implicit ord: M => Ordered[M]): Treap[M] = this.ins(key, 1)
 
-  def delete[M >: K](key: M)(implicit ord: M => Ordered[M]): Treap[M] = del(key, 1)
+  def delete[M >: K](key: M)(implicit ord: M => Ordered[M]): Treap[M] = this.del(key, 1)
 
   private def split[M >: K](t: Treap[M], key: M)(implicit ord: M => Ordered[M]): (Treap[M], Treap[M])
   = t match {
