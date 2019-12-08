@@ -156,6 +156,10 @@ class MultiSetTest extends FlatSpec {
     } yield listElement
     assert(newSet.toList == List(2 -> 1, 3 -> 3, 4 -> 2))
   }
+
+  it should "support toString" in {
+    assert(MultiSet(4, 8, 15, 16, 23, 42, 42).toString == "[4 -> 1, 8 -> 1, 15 -> 1, 16 -> 1, 23 -> 1, 42 -> 2]")
+  }
 }
 
 object MultiSetTest {

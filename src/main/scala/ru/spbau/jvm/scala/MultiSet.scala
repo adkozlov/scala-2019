@@ -7,27 +7,54 @@ import ru.spbau.jvm.scala.MultiSet.{T, _}
 
 import scala.math.max
 
-final class MultiSet[A](private val root: N[A], val size: Int)(implicit ord: Ordering[A]) {
+/**
+ * Functional persistent MultiSet which is implemented as AVL-tree.
+ */
+final class MultiSet[A] private(private val root: N[A], val size: Int)(implicit ord: Ordering[A]) {
 
   outer =>
 
   import ord._
 
+  /**
+   * Returns a new multiset with the specified element added.
+   */
   def +(element: A): MultiSet[A] = this + (element, 1)
 
+  /**
+   * Returns a new multiset without one occurrence of the specified element.
+   * If this multiset does not contain that element then returns the same multiset.
+   */
   def -(element: A): MultiSet[A] = delImpl(root, element, 1) match {
     case (r, true) => new MultiSet(r, size - 1)
-    case (r, false) => new MultiSet(r, size)
+    case (_, false) => this
   }
 
+  /**
+   * Same as [[MultiSet.count]].
+   */
   def apply(element: A): Int = count(element)
 
+  /**
+   * Returns the number of occurrences of the specified element.
+   */
   def count(element: A): Int = countImpl(root, element)
 
+  /**
+   * Checks whether this multiset contains the specified element.
+   */
   def contains(element: A): Boolean = count(element) > 0
 
+  /**
+   * Applies a binary operator to a start entry (element, occurrences) and all entries in ascending order.
+   * Returns accumulated result.
+   */
   def foldLeftPairs[B](container: B)(op: (B, (A, Int)) => B): B = foldLeftImpl(container, root)(op)
 
+  /**
+   * Applies a binary operator to a start element and all elements (same element may occur multiple times)
+   * in ascending order. Returns accumulated result.
+   */
   def foldLeft[B](container: B)(op: (B, A) => B): B = foldLeftImpl(container, root) { (container, value) =>
     val (element, cnt) = value
     var newContainer = container
@@ -37,14 +64,24 @@ final class MultiSet[A](private val root: N[A], val size: Int)(implicit ord: Ord
     newContainer
   }
 
+  /**
+   * Apply f to each element.
+   */
   def foreach[U](f: A => U): Unit = foldLeft(()) { (_, element) =>
     f(element)
   }
 
+  /**
+   * Builds a new correctly sorted MultiSet by applying a function to all elements of this multiset.
+   */
   def map[B](f: A => B)(implicit ordering: Ordering[B]): MultiSet[B] = foldLeft(MultiSet[B]()) { (set, element) =>
     set + f(element)
   }
 
+  /**
+   * Builds a new correctly sorted MultiSet by applying a function to all elements of this multiset
+   * and using the elements of the resulting multisets.
+   */
   def flatMap[B](f: A => MultiSet[B])(implicit ev: Ordering[B]): MultiSet[B] =
     foldLeft(MultiSet[B]()) { (set, element) =>
       f(element).foldLeft(set) { (set, mappedElement) =>
@@ -52,12 +89,23 @@ final class MultiSet[A](private val root: N[A], val size: Int)(implicit ord: Ord
       }
     }
 
+  /**
+   * Selects all elements of this multiset which satisfy a predicate and builds a new multiset from them.
+   */
   def filter(f: A => Boolean): MultiSet[A] = foldLeft(MultiSet()) { (set, element) =>
     if (f(element)) set + element else set
   }
 
+  /**
+   * Creates a non-strict filter of this set.
+   * Restricts the domain of subsequent map, flatMap, foreach, and withFilter operations.
+   */
   def withFilter(p: A => Boolean): MultiSetWithFilter = new MultiSetWithFilter(p)
 
+  /**
+   * Computes the union between this multiset and another multiset.
+   * Each element x will occur (this.count(x) + that.count(x)) times.
+   */
   def |(that: MultiSet[A]): MultiSet[A] = {
     if (size < that.size) {
       return that | this
@@ -67,6 +115,10 @@ final class MultiSet[A](private val root: N[A], val size: Int)(implicit ord: Ord
     }
   }
 
+  /**
+   * Computes the intersection between this multiset and another multiset.
+   * Each element x will occur min(this.count(x), that.count(x)) times.
+   */
   def &(that: MultiSet[A]): MultiSet[A] = {
     if (size < that.size) {
       return that & this
