@@ -37,6 +37,8 @@ class MultiSet[V](private val count: Int = 0, private val tree: Tree[V, Int] = L
     tree.toList.flatMap(p => List.fill(p._2)(p._1))
   }
 
+  def iterator: Iterator[V] = toMultiList.iterator
+
   def map[U](f: V => U)(implicit ord: Ordering[U]): MultiSet[U] = {
     MultiSet(toMultiList.map(f))
   }

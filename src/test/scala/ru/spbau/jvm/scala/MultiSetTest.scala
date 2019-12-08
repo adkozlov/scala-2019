@@ -21,6 +21,27 @@ class MultiSetTest extends FlatSpec with Matchers {
     testSet.add(1).add(2).add(2).add(1).add(-1).toString should be ("[-1 -> 1, 1 -> 2, 2 -> 2]")
   }
 
+  "size" should "work correctly" in {
+    val testSet = MultiSet[Int]()
+
+    testSet.add(1).size should be (1)
+    testSet.add(1).add(2).size should be (2)
+    testSet.add(1).add(2).add(2).size should be (3)
+    testSet.add(1).add(2).add(2).add(1).size should be (4)
+    testSet.add(1).add(2).add(2).add(1).add(-1).size should be (5)
+
+    val testSet1 = MultiSet[Int](initList)
+    testSet1.remove(1).size should be (9)
+    testSet1.remove(1).remove(2).size should be (8)
+    testSet1.remove(1).remove(2).remove(2).size should be (7)
+    testSet1.remove(1).remove(2).remove(2).remove(5)
+      .size should be (6)
+    testSet1.remove(1).remove(2).remove(2).remove(5)
+      .remove(9).size should be (5)
+    testSet1.remove(1).remove(2).remove(2).remove(5)
+      .remove(9).remove(5).size should be (4)
+  }
+
   "remove" should "work correctly" in {
     val testSet = MultiSet[Int](initList)
 
