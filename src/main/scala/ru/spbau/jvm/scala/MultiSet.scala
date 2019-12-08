@@ -3,13 +3,19 @@ package ru.spbau.jvm.scala
 import ru.spbau.jvm.scala.MultiSet.N.ParentHeight
 import ru.spbau.jvm.scala.MultiSet.{T, _}
 
-import scala.math.max
+import scala.math.{max, min}
 
 final class MultiSet[A](private val root: N[A], private val size: Int)(implicit ord: Ordering[A]) {
 
   import ord._
 
-  def +(element: A): MultiSet[A] = new MultiSet(addImpl(root, element), size + 1)
+  def +(value: (A, Int)): MultiSet[A] = value match {
+    case (_, -1) => throw new IllegalArgumentException()
+    case (_, 0) => this
+    case (element, n) => new MultiSet(addImpl(root, element, n), size + n)
+  }
+
+  def +(element: A): MultiSet[A] = this + (element, 1)
 
   def -(element: A): MultiSet[A] = delImpl(root, element, 1) match {
     case (r, true) => new MultiSet(r, size - 1)
@@ -20,15 +26,76 @@ final class MultiSet[A](private val root: N[A], private val size: Int)(implicit 
 
   def contains(element: A): Boolean = count(element) > 0
 
-  private def addImpl(node: N[A], element: A): N[A] = node match {
-    case Nil => T(Nil, element -> 1, Nil)
+  def foreach[U](f: (A, Int) => U): Unit = foreachImpl(root, f)
+
+  def foreach[U](f: A => U): Unit = {
+    foreach { (element, cnt) =>
+      for (_ <- 0 until cnt) {
+        f(element)
+      }
+    }
+  }
+
+  def map[B](f: A => B)(implicit ordering: Ordering[B]): MultiSet[B] = {
+    var newSet = MultiSet[B]()
+    foreach { element =>
+      newSet = newSet + f(element)
+    }
+    newSet
+  }
+
+  def flatMap[B](f: A => IterableOnce[B])(implicit ev: Ordering[B]): MultiSet[B] = {
+    var newSet = MultiSet[B]()
+    foreach { oldElement =>
+      f(oldElement).iterator.foreach { newElement =>
+        newSet = newSet + newElement
+      }
+    }
+    newSet
+  }
+
+  def filter(f: A => Boolean): MultiSet[A] = {
+    var newSet = MultiSet()
+    foreach { element =>
+      if (f(element)) {
+        newSet = newSet + element
+      }
+    }
+    newSet
+  }
+
+  def |(that: MultiSet[A]): MultiSet[A] = {
+    if (size < that.size) {
+      return that | this
+    }
+    var newSet = this
+    that.foreach { (element, cnt) =>
+      newSet = newSet + (element, cnt)
+    }
+    newSet
+  }
+
+  def &(that: MultiSet[A]): MultiSet[A] = {
+    if (size < that.size) {
+      return that & this
+    }
+    var newSet = MultiSet()
+    that.foreach { (element, cnt) =>
+      val minCnt = math.min(cnt, count(element))
+      newSet = newSet + (element, minCnt)
+    }
+    newSet
+  }
+
+  private def addImpl(node: N[A], element: A, n: Int): N[A] = node match {
+    case Nil => T(Nil, element -> n, Nil)
     case T(l, e -> cnt, r) if e > element =>
-      val left = addImpl(l, element)
+      val left = addImpl(l, element, n)
       balance(T(left, e -> cnt, r))
     case T(l, e -> cnt, r) if e < element =>
-      val right = addImpl(r, element)
+      val right = addImpl(r, element, n)
       balance(T(l, e -> cnt, right))
-    case T(l, e -> cnt, r) => T(l, e -> (cnt + 1), r)
+    case T(l, e -> cnt, r) => T(l, e -> (cnt + n), r)
   }
 
   private def delImpl(node: N[A], element: A, n: Int): (N[A], Boolean) = node match {
@@ -96,6 +163,14 @@ final class MultiSet[A](private val root: N[A], private val size: Int)(implicit 
     val T(t1, z, T(T(t2, x, t3), y, t4)) = node
     T(T(t1, z, t2), x, T(t3, y, t4))
   }
+
+  private def foreachImpl[U](root: N[A], f: (A, Int) => U): Unit = root match {
+    case Nil => ()
+    case T(l, e -> cnt, r) =>
+      foreachImpl(l, f)
+      f(e, cnt)
+      foreachImpl(r, f)
+  }
 }
 
 private object MultiSet {
@@ -121,6 +196,11 @@ private object MultiSet {
     override def height: Int = 0
   }
 
+  def apply[A](elements: A*)(implicit ord: Ordering[A]): MultiSet[A] = {
+    elements.foldLeft(new MultiSet[A](Nil, 0)) { (set, elem) =>
+      set + elem
+    }
+  }
 }
 
 
