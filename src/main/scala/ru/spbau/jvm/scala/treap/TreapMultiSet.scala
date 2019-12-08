@@ -2,7 +2,7 @@ package ru.spbau.jvm.scala.treap
 
 class TreapMultiSet[K](keys: K*)(implicit canCompare: K => Ordered[K]) {
 
-  def root = {
+  private val root: Treap = {
     var contents: Seq[NodeContent] = Seq.empty
     var last: Option[K] = Option.empty
     var lastCount = 0
