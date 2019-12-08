@@ -1,19 +1,17 @@
 package ru.spbau.jvm.scala
 
+import java.util.StringJoiner
+
 import ru.spbau.jvm.scala.MultiSet.N.ParentHeight
 import ru.spbau.jvm.scala.MultiSet.{T, _}
 
-import scala.math.{max, min}
+import scala.math.max
 
-final class MultiSet[A](private val root: N[A], private val size: Int)(implicit ord: Ordering[A]) {
+final class MultiSet[A](private val root: N[A], val size: Int)(implicit ord: Ordering[A]) {
+
+  outer =>
 
   import ord._
-
-  def +(value: (A, Int)): MultiSet[A] = value match {
-    case (_, -1) => throw new IllegalArgumentException()
-    case (_, 0) => this
-    case (element, n) => new MultiSet(addImpl(root, element, n), size + n)
-  }
 
   def +(element: A): MultiSet[A] = this + (element, 1)
 
@@ -22,70 +20,75 @@ final class MultiSet[A](private val root: N[A], private val size: Int)(implicit 
     case (r, false) => new MultiSet(r, size)
   }
 
+  def apply(element: A): Int = count(element)
+
   def count(element: A): Int = countImpl(root, element)
 
   def contains(element: A): Boolean = count(element) > 0
 
-  def foreach[U](f: (A, Int) => U): Unit = foreachImpl(root, f)
+  def foldLeftPairs[B](container: B)(op: (B, (A, Int)) => B): B = foldLeftImpl(container, root)(op)
 
-  def foreach[U](f: A => U): Unit = {
-    foreach { (element, cnt) =>
-      for (_ <- 0 until cnt) {
-        f(element)
+  def foldLeft[B](container: B)(op: (B, A) => B): B = foldLeftImpl(container, root) { (container, value) =>
+    val (element, cnt) = value
+    var newContainer = container
+    for (_ <- 0 until cnt) {
+      newContainer = op(newContainer, element)
+    }
+    newContainer
+  }
+
+  def foreach[U](f: A => U): Unit = foldLeft(()) { (_, element) =>
+    f(element)
+  }
+
+  def map[B](f: A => B)(implicit ordering: Ordering[B]): MultiSet[B] = foldLeft(MultiSet[B]()) { (set, element) =>
+    set + f(element)
+  }
+
+  def flatMap[B](f: A => MultiSet[B])(implicit ev: Ordering[B]): MultiSet[B] =
+    foldLeft(MultiSet[B]()) { (set, element) =>
+      f(element).foldLeft(set) { (set, mappedElement) =>
+        set + mappedElement
       }
     }
+
+  def filter(f: A => Boolean): MultiSet[A] = foldLeft(MultiSet()) { (set, element) =>
+    if (f(element)) set + element else set
   }
 
-  def map[B](f: A => B)(implicit ordering: Ordering[B]): MultiSet[B] = {
-    var newSet = MultiSet[B]()
-    foreach { element =>
-      newSet = newSet + f(element)
-    }
-    newSet
-  }
-
-  def flatMap[B](f: A => IterableOnce[B])(implicit ev: Ordering[B]): MultiSet[B] = {
-    var newSet = MultiSet[B]()
-    foreach { oldElement =>
-      f(oldElement).iterator.foreach { newElement =>
-        newSet = newSet + newElement
-      }
-    }
-    newSet
-  }
-
-  def filter(f: A => Boolean): MultiSet[A] = {
-    var newSet = MultiSet()
-    foreach { element =>
-      if (f(element)) {
-        newSet = newSet + element
-      }
-    }
-    newSet
-  }
+  def withFilter(p: A => Boolean): MultiSetWithFilter = new MultiSetWithFilter(p)
 
   def |(that: MultiSet[A]): MultiSet[A] = {
     if (size < that.size) {
       return that | this
     }
-    var newSet = this
-    that.foreach { (element, cnt) =>
-      newSet = newSet + (element, cnt)
+    that.foldLeftPairs(this) { (set, value: (A, Int)) =>
+      set + value
     }
-    newSet
   }
 
   def &(that: MultiSet[A]): MultiSet[A] = {
     if (size < that.size) {
       return that & this
     }
-    var newSet = MultiSet()
-    that.foreach { (element, cnt) =>
+    that.foldLeftPairs(MultiSet()) { (set, value: (A, Int)) =>
+      val (element, cnt) = value
       val minCnt = math.min(cnt, count(element))
-      newSet = newSet + (element, minCnt)
+      set + (element, minCnt)
     }
-    newSet
   }
+
+  private def +(value: (A, Int)): MultiSet[A] = value match {
+    case (_, -1) => throw new IllegalArgumentException()
+    case (_, 0) => this
+    case (element, n) => new MultiSet(addImpl(root, element, n), size + n)
+  }
+
+  override def toString: String = foldLeftPairs(new StringJoiner(", ", "[", "]")) {
+    (sj, value) =>
+      val (element, cnt) = value
+      sj.add(s"$element -> $cnt")
+  }.toString
 
   private def addImpl(node: N[A], element: A, n: Int): N[A] = node match {
     case Nil => T(Nil, element -> n, Nil)
@@ -164,13 +167,23 @@ final class MultiSet[A](private val root: N[A], private val size: Int)(implicit 
     T(T(t1, z, t2), x, T(t3, y, t4))
   }
 
-  private def foreachImpl[U](root: N[A], f: (A, Int) => U): Unit = root match {
-    case Nil => ()
-    case T(l, e -> cnt, r) =>
-      foreachImpl(l, f)
-      f(e, cnt)
-      foreachImpl(r, f)
+  private def foldLeftImpl[B](container: B, root: N[A])(op: (B, (A, Int)) => B): B = root match {
+    case Nil => container
+    case T(l, value, r) =>
+      val leftContainer = foldLeftImpl(container, l)(op)
+      foldLeftImpl(op(leftContainer, value), r)(op)
   }
+
+  class MultiSetWithFilter(p: A => Boolean) {
+    def map[B](f: A => B)(implicit ordering: Ordering[B]): MultiSet[B] = outer filter p map f
+
+    def flatMap[B](f: A => MultiSet[B])(implicit ordering: Ordering[B]): MultiSet[B] = outer filter p flatMap f
+
+    def foreach[U](f: A => U): Unit = outer filter p foreach f
+
+    def withFilter(q: A => Boolean): MultiSetWithFilter = new MultiSetWithFilter(x => p(x) && q(x))
+  }
+
 }
 
 private object MultiSet {
