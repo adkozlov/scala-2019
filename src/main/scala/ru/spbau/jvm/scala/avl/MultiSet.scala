@@ -10,7 +10,7 @@ class MultiSet[T]()(implicit ord: T => Ordered[T]) {
   //Implement Treap, as one of the simplest
   case class Node[E](key: E,
                      var total: Int = 1, balancingKey: Int = Random.nextInt(),
-                     //Tried option here, but it looked even the worse
+                     //Tried option here, but it looked even worse
                      var left: Node[E] = null, var right: Node[E] = null)(implicit ord: E => Ordered[E]) {
     def get(key: E): Node[E] = {
       if (this.key == key) return this
