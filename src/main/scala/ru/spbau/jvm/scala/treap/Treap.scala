@@ -51,7 +51,8 @@ object EmptyNode {
 }
 
 object TreapNode {
-  def apply[K](base: NodeContent[K], left: Treap[K] = EmptyNode[K](), right: Treap[K] = EmptyNode[K]())(implicit ord:Ordering[K]): TreapNode[K] = new TreapNode(base, left, right)
+  def apply[K](base: NodeContent[K], left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]): TreapNode[K] = new TreapNode(base, left, right)
+  def apply[K](base: NodeContent[K])(implicit ord:Ordering[K]): TreapNode[K] = new TreapNode(base, EmptyNode(), EmptyNode())
   def apply[K](content: Seq[NodeContent[K]])(implicit ord:Ordering[K]): TreapNode[K] = {
     val base = content.minBy(_.priority)
     new TreapNode[K](base, Treap(content.filter(p => ord.lt(p.key, base.key))), Treap(content.filter(p => ord.gt(p.key, base.key))))

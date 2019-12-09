@@ -44,6 +44,20 @@ class treapSetTest extends FunSuite with BeforeAndAfterEach {
     val resultSet = set | set2
     assert(2 == resultSet.count(4))
   }
+
+  test("& with existing elements") {
+    val set = new TreapMultiSet(seq:_*)
+    val set2 = new TreapMultiSet(5, 5)
+    val resultSet = set & set2
+    assert(2 == resultSet.count(5))
+  }
+
+  test("& with non-existant element") {
+    val set = new TreapMultiSet(seq:_*)
+    val set2 = new TreapMultiSet(4, 4)
+    val resultSet = set & set2
+    assert(0 == resultSet.count(4))
+  }
 }
 
 object Runner extends App {
