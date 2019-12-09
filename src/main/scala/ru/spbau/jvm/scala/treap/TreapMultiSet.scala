@@ -25,4 +25,6 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
     val (_, mightBeEqual) = splitRightest(lowerEqual)
     mightBeEqual.map(c => if (ord.equiv(key, c.key)) c.number else 0).getOrElse(0)
   }
+
+  def foreach: (K => Unit) => Unit = root.foreach
 }

@@ -21,6 +21,15 @@ class treapSetTest extends FunSuite with BeforeAndAfterEach {
       assert(seq.count(_ == elem) == set.count(elem))
     }
   }
+
+  test("foreach correctness") {
+    val set = new TreapMultiSet(seq:_*)
+    var res: Seq[Int] = Seq.empty
+    for (x <- set) {
+      res = res :+ x
+    }
+    assert(res == seq.sorted)
+  }
 }
 
 object Runner extends App {
