@@ -95,7 +95,7 @@ class MultiSet[T](implicit ordering: Ordering[T]) {
     newMultiSet
   }
 
-  override def toString: String = root.childrenRepresentation().mkString("[", ", ", "]")
+  override def toString: String = root.childrenRepresentation()
 
   override def equals(obj: Any): Boolean = {
     obj match {
@@ -166,13 +166,13 @@ class MultiSet[T](implicit ordering: Ordering[T]) {
   private abstract class OptionalNode {
     def foreach(f: T => Unit): Unit
 
-    def childrenRepresentation(): List[String]
+    def childrenRepresentation(): String
   }
 
   private case object Nil extends OptionalNode {
     override def foreach(f: T => Unit): Unit = {}
 
-    override def childrenRepresentation(): List[String] = List.empty
+    override def childrenRepresentation(): String = "[]"
   }
 
   private case class Node(left: OptionalNode,
@@ -193,8 +193,16 @@ class MultiSet[T](implicit ordering: Ordering[T]) {
       right.foreach(f)
     }
 
-    override def childrenRepresentation(): List[String] = {
-      left.childrenRepresentation() ++ List(s"$x -> $count") ++ right.childrenRepresentation()
+    override def childrenRepresentation(): String = {
+      var leftSide = left.childrenRepresentation().dropRight(1)
+      if (leftSide.length > 1) {
+        leftSide += ", "
+      }
+      var rightSide = right.childrenRepresentation().drop(1)
+      if (rightSide.length > 1) {
+        rightSide = s", $rightSide"
+      }
+      leftSide + s"$x -> $count" + rightSide
     }
 
   }
