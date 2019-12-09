@@ -58,6 +58,13 @@ class treapSetTest extends FunSuite with BeforeAndAfterEach {
     val resultSet = set & set2
     assert(0 == resultSet.count(4))
   }
+
+  test("map correctness") {
+    val set = new TreapMultiSet(seq:_*).map(_ + 1)
+    for (elem <- uniqueSeq) {
+      assert(seq.count(_ == elem) == set.count(elem + 1))
+    }
+  }
 }
 
 object Runner extends App {
