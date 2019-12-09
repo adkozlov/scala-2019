@@ -1,5 +1,7 @@
 package ru.spbau.jvm.scala.treap
 
+import scala.collection.mutable
+
 class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
   import Treap._
 
@@ -67,10 +69,20 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
     new TreapMultiSet(resultRoot)
   }
 
+  override def toString: String = {
+    var pairs: Seq[String] = Seq.empty
+    root.foreachOnce((element, count) => pairs = pairs :+ s"$element -> $count")
+    pairs.mkString("[", ", ", "]")
+  }
+
   private def smallerBigger(that: TreapMultiSet[K]): (TreapMultiSet[K], TreapMultiSet[K]) = {
     if (this.root.nodeSize < that.root.nodeSize)
       (this, that)
     else
       (that, this)
   }
+}
+
+object TreapMultiSet {
+  def apply[K](keys: K*)(implicit ord: Ordering[K]) = new TreapMultiSet(keys:_*)
 }
