@@ -27,4 +27,23 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
   }
 
   def foreach: (K => Unit) => Unit = root.foreach
+  def foreachOnce: ((K, Int) => Unit) => Unit = root.foreachOnce
+
+  def |(that: TreapMultiSet[K]): TreapMultiSet[K] = {
+    val (addTo, addFrom) = smallerBigger(that)
+    var resultRoot: Treap[K] = addTo.root
+    addFrom.foreachOnce((element, count) => {
+      val addToCount = addTo.count(element)
+      if (addToCount < count)
+        resultRoot = addInsert(resultRoot, element, count - addToCount)
+    })
+    new TreapMultiSet(resultRoot)
+  }
+
+  private def smallerBigger(that: TreapMultiSet[K]): (TreapMultiSet[K], TreapMultiSet[K]) = {
+    if (this.root.nodeSize < that.root.nodeSize)
+      (this, that)
+    else
+      (that, this)
+  }
 }

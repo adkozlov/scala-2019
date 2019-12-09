@@ -15,16 +15,24 @@ sealed trait Treap[K] {
   def nodeSize: Int
   def isEmpty: Boolean
   def foreach(f: K => Unit): Unit
+  def foreachOnce(f: (K, Int) => Unit): Unit
 }
 
 case class TreapNode[K](base: NodeContent[K], left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]) extends Treap[K] {
   private val size = left.nodeSize + right.nodeSize + 1
   override def nodeSize: Int = size
   override def isEmpty: Boolean = false
+
   override def foreach(f: K => Unit): Unit = {
     left.foreach(f)
     for (_ <- 1 to base.number) f(base.key)
     right.foreach(f)
+  }
+
+  override def foreachOnce(f: (K, Int) => Unit): Unit = {
+    left.foreachOnce(f)
+    f(base.key, base.number)
+    right.foreachOnce(f)
   }
 }
 
@@ -35,6 +43,7 @@ case class EmptyNode[K]() extends Treap[K] {
   override def nodeSize: Int = 0
   override def isEmpty: Boolean = true
   override def foreach(f: K => Unit): Unit = {}
+  override def foreachOnce(f: (K, Int) => Unit): Unit = {}
 }
 
 object EmptyNode {

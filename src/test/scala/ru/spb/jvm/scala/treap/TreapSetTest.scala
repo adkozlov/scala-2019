@@ -30,6 +30,20 @@ class treapSetTest extends FunSuite with BeforeAndAfterEach {
     }
     assert(res == seq.sorted)
   }
+
+  test("| adds old correctness") {
+    val set = new TreapMultiSet(seq:_*)
+    val set2 = new TreapMultiSet(1, 1, 1)
+    val resultSet = set | set2
+    assert(3 == resultSet.count(1))
+  }
+
+  test("| adds new value correctness") {
+    val set = new TreapMultiSet(seq:_*)
+    val set2 = new TreapMultiSet(4, 4)
+    val resultSet = set | set2
+    assert(2 == resultSet.count(4))
+  }
 }
 
 object Runner extends App {
