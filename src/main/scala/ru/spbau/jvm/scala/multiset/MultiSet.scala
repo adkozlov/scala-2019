@@ -10,39 +10,55 @@ sealed trait Tree[+A] {
 
   def height: Int
 
+  private def smallRightRot[B](head: Node[B], left: Tree[B], right: Tree[B]): Tree[B] = {
+    val newRight = Cons(head, left.right, right)
+    Cons(left.head, left.left, newRight)
+  }
+
+  private def bigRightRot[B](head: Node[B], left: Tree[B], right: Tree[B]): Tree[B] = {
+    val newRightLeft = left.right.right
+    val newRightRight = right
+    val newRight = Cons(head, newRightLeft, newRightRight)
+    val newLeftLeft = left.left
+    val newLeftRight = left.right.left
+    val newLeft = Cons(left.head, newLeftLeft, newLeftRight)
+    val newHead = left.right.head
+    Cons(newHead, newLeft, newRight)
+  }
+
+  private def smallLeftRot[B](head: Node[B], left: Tree[B], right: Tree[B]): Tree[B] = {
+    val newLeftLeft = left
+    val newLeftRight = right.left
+    val newLeft = Cons(head, newLeftLeft, newLeftRight)
+    Cons(right.head, newLeft, right.right)
+  }
+
+  private def bigLeftRot[B](head: Node[B], left: Tree[B], right: Tree[B]): Tree[B] = {
+    val newLeftLeft = left
+    val newLeftRight = right.left.left
+    val newLeftHead = head
+    val newLeft = Cons(newLeftHead, newLeftLeft, newLeftRight)
+    val newRightLeft = right.left.right
+    val newRightRight = right.right
+    val newRightHead = right.head
+    val newRight = Cons(newRightHead, newRightLeft, newRightRight)
+    val newHead = right.left.head
+    Cons(newHead, newLeft, newRight)
+  }
+
   def balanced[B](head: Node[B], left: Tree[B], right: Tree[B]): Tree[B] = {
     if (left.height > right.height + 1) {
       if (left.left.height >= left.right.height) {
-        val newRight = Cons(head, left.right, right.right)
-        return Cons(left.head, left.left, newRight)
+        smallRightRot(head, left, right)
       } else {
-        val newRightLeft = left.right.right
-        val newRightRight = right
-        val newRight = Cons(head, newRightLeft, newRightRight)
-        val newLeftLeft = left.left
-        val newLeftRight = left.right.left
-        val newLeft = Cons(left.head, newLeftLeft, newLeftRight)
-        val newHead = left.right.head
-        return Cons(newHead, newLeft, newRight)
+        bigRightRot(head, left, right)
       }
     }
     if (left.height + 1 < right.height) {
       if (right.right.height >= right.left.height) {
-        val newLeftLeft = left
-        val newLeftRight = right.left
-        val newLeft = Cons(head, newLeftLeft, newLeftRight)
-        return Cons(right.head, newLeft, right.right)
+        smallLeftRot(head, left, right)
       } else {
-        val newLeftLeft = left
-        val newLeftRight = right.left.left
-        val newLeftHead = head
-        val newLeft = Cons(newLeftHead, newLeftLeft, newLeftRight)
-        val newRightLeft = right.left.right
-        val newRightRight = right.right
-        val newRightHead = right.head
-        val newRight = Cons(newRightHead, newRightLeft, newRightRight)
-        val newHead = right.left.head
-        return Cons(newHead, newLeft, newRight)
+        bigLeftRot(head, left, right)
       }
     }
     Cons(head, left, right)
@@ -70,8 +86,9 @@ sealed trait Tree[+A] {
 
   def isEmpty: Boolean
 
-  def iterator: Iterator[A]
+  def iterator: Iterator[Node[A]]
 
+  def foreach(function: A => Unit): Unit
 
 }
 
@@ -191,9 +208,8 @@ case class Cons[+A](head: Node[A], left: Tree[A], right: Tree[A]) extends Tree[A
 
   override def isEmpty: Boolean = false
 
-  override def iterator: Iterator[A] = new Iterator[A] {
+  override def iterator: Iterator[Node[A]] = new Iterator[Node[A]] {
     private var branch = 0
-    private var counter = 0
     private val leftIter = left.iterator
     private val rightIter = right.iterator
     override def hasNext: Boolean = {
@@ -205,17 +221,11 @@ case class Cons[+A](head: Node[A], left: Tree[A], right: Tree[A]) extends Tree[A
     }
 
     @scala.annotation.tailrec
-    override def next(): A = {
+    override def next(): Node[A] = {
       branch match {
         case 0 =>
-          if (counter < head.count) {
-            counter += 1
-            head.key
-          } else {
-            branch = 1
-            counter = 0
-            next()
-          }
+          branch = 1
+          head
         case 1 =>
           if (leftIter.hasNext) {
             leftIter.next
@@ -228,6 +238,13 @@ case class Cons[+A](head: Node[A], left: Tree[A], right: Tree[A]) extends Tree[A
     }
   }
 
+  override def foreach(function: A => Unit): Unit = {
+    for (i <- 0 to head.count) {
+      function(head.key)
+    }
+    left.foreach(function)
+    right.foreach(function)
+  }
 
 }
 
@@ -253,7 +270,7 @@ case object Nil extends Tree[Nothing] {
 
   override def isEmpty: Boolean = true
 
-  override def iterator: Iterator[Nothing] = new Iterator[Nothing] {
+  override def iterator: Iterator[Node[Nothing]] = new Iterator[Node[Nothing]] {
     override def hasNext: Boolean = false
 
     override def next(): Nothing = throw new NoSuchElementException
@@ -264,12 +281,13 @@ case object Nil extends Tree[Nothing] {
   override def min: Node[Nothing] = null
 
   override def max: Node[Nothing] = null
+
+  override def foreach(function: Nothing => Unit): Unit = {}
+
 }
 
 
 case class MultiSet[A](elems: A*) {
-
-
 
   private var tree: Tree[A] = {
     var set: Tree[A] = Nil
@@ -283,6 +301,10 @@ case class MultiSet[A](elems: A*) {
     tree = tree.add(elem, count)
   }
 
+  def add (elem: A): Unit = {
+    add(elem, 1)
+  }
+
   def apply(elem: A): Int = tree(elem)
 
   def +(elem: A): Unit = {
@@ -291,6 +313,10 @@ case class MultiSet[A](elems: A*) {
 
   def remove(elem: A, count: Int): Unit = {
     tree = tree.remove(elem, count)
+  }
+
+  def remove(elem: A): Unit = {
+    remove(elem, 1)
   }
 
   def |[B >: A](other: MultiSet[B]): MultiSet[B] = {
@@ -311,6 +337,54 @@ case class MultiSet[A](elems: A*) {
 
   def isEmpty: Boolean = tree.isEmpty
 
-  def iterator: Iterator[A] = tree.iterator
+  def iterator: Iterator[A] = new Iterator[A] {
+    private val treeIter = tree.iterator
+    private var counter = 0
+    var current: Node[A] = _
+
+    override def hasNext: Boolean = {
+      if (treeIter.hasNext) true
+      else if (current != null) {
+        counter < current.count
+      } else false
+    }
+
+    override def next(): A = {
+      if (current == null)
+        current = treeIter.next()
+      if (counter >= current.count) {
+        current = treeIter.next()
+        counter = 0
+      }
+      counter += 1
+      current.key
+    }
+  }
+
+  def foreach(function: A => Unit): Unit = {
+    tree.foreach(function)
+  }
+
+  def map[B](function: A => B): MultiSet[B] = {
+    val result = MultiSet[B]()
+    for (node: Node[A] <- tree.iterator) {
+      result.add(function(node.key), node.count)
+    }
+    result
+  }
+
+  override def toString: String = {
+    val sb = new StringBuilder()
+    sb.append("[")
+    for (node: Node[A] <- tree.iterator) {
+      sb.append(node.key)
+      sb.append(" -> ")
+      sb.append(node.count)
+      sb.append(", ")
+    }
+    sb.delete(sb.length() - 2, sb.length())
+    sb.append("]")
+    sb.result()
+  }
 
 }

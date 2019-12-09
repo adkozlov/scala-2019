@@ -9,5 +9,6 @@ object Main {
 
     val intersect = set | MultiSet(42)
     println(intersect(42))
+    println(set)
   }
 }
