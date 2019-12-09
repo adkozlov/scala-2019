@@ -3,7 +3,7 @@ package ru.spb.jvm.scala.treap
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 import ru.spbau.jvm.scala.treap.TreapMultiSet
 
-class treapTest extends FunSuite with BeforeAndAfterEach {
+class treapSetTest extends FunSuite with BeforeAndAfterEach {
   private val seq = Seq(5, 1, 2, 3, 3, 5, 5)
   private def uniqueSeq = seq.distinct
 //  override def beforeEach() = {}
@@ -13,5 +13,5 @@ class treapTest extends FunSuite with BeforeAndAfterEach {
 }
 
 object Runner extends App {
-  org.scalatest.run(new treapTest())
+  org.scalatest.run(new treapSetTest())
 }
