@@ -72,7 +72,6 @@ sealed trait Tree[+A] {
 
   def iterator: Iterator[A]
 
-  def foreach(function: A => Unit): Unit
 
 }
 
@@ -229,9 +228,7 @@ case class Cons[+A](head: Node[A], left: Tree[A], right: Tree[A]) extends Tree[A
     }
   }
 
-  override def foreach(function: A => Unit): Unit = {
-    for (i = 0)
-  }
+
 }
 
 case object Nil extends Tree[Nothing] {
