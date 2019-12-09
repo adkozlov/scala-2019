@@ -65,6 +65,26 @@ class treapSetTest extends FunSuite with BeforeAndAfterEach {
       assert(seq.count(_ == elem) == set.count(elem + 1))
     }
   }
+
+  test("filter correctness") {
+    val set = new TreapMultiSet(seq:_*).withFilter(_ > 2)
+    for (elem <- uniqueSeq) {
+      assert((if (elem > 2) seq.count(_ == elem) else 0) == set.count(elem))
+    }
+  }
+
+  test("various for-comprehensions compile and give correct type") {
+    assert("all good" == (
+        (for {
+          x <- new TreapMultiSet(seq:_*)
+          if x > 2
+        } yield x.toString) match {
+          case _: TreapMultiSet[String] => "all good"
+          case _ => "wrong type"
+        }
+      )
+    )
+  }
 }
 
 object Runner extends App {

@@ -59,6 +59,14 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
     new TreapMultiSet(resultRoot)
   }
 
+  def withFilter(f: K => Boolean): TreapMultiSet[K] = {
+    var resultRoot: Treap[K] = EmptyNode()
+    foreachOnce((element, count) => {
+      if (f(element)) resultRoot = addInsert(resultRoot, element, count)
+    })
+    new TreapMultiSet(resultRoot)
+  }
+
   private def smallerBigger(that: TreapMultiSet[K]): (TreapMultiSet[K], TreapMultiSet[K]) = {
     if (this.root.nodeSize < that.root.nodeSize)
       (this, that)
