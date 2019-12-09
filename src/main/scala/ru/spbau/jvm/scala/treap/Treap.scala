@@ -16,7 +16,7 @@ sealed trait Treap[K] {
   def isEmpty: Boolean
 }
 
-case class TreapNode[K](base: NodeContent[K], left: Treap[K], right: Treap[K])(implicit canCompare: K => Ordered[K]) extends Treap[K] {
+case class TreapNode[K](base: NodeContent[K], left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]) extends Treap[K] {
   private val size = left.nodeSize + right.nodeSize + 1
   override def nodeSize: Int = size
   override def isEmpty: Boolean = false
@@ -35,18 +35,18 @@ object EmptyNode {
 }
 
 object TreapNode {
-  def apply[K](base: NodeContent[K], left: Treap[K] = EmptyNode[K](), right: Treap[K] = EmptyNode[K]())(implicit canCompare: K => Ordered[K]): TreapNode[K] = new TreapNode(base, left, right)
-  def apply[K](content: Seq[NodeContent[K]])(implicit canCompare: K => Ordered[K]): TreapNode[K] = {
+  def apply[K](base: NodeContent[K], left: Treap[K] = EmptyNode[K](), right: Treap[K] = EmptyNode[K]())(implicit ord:Ordering[K]): TreapNode[K] = new TreapNode(base, left, right)
+  def apply[K](content: Seq[NodeContent[K]])(implicit ord:Ordering[K]): TreapNode[K] = {
     val base = content.minBy(_.priority)
-    new TreapNode[K](base, apply(content.filter(_.key < base.key)), apply(content.filter(_.key > base.key)))
+    new TreapNode[K](base, Treap(content.filter(p => ord.lt(p.key, base.key))), Treap(content.filter(p => ord.gt(p.key, base.key))))
   }
 }
 
 object Treap {
-  def apply[K](content: Seq[NodeContent[K]])(implicit canCompare: K => Ordered[K]): Treap[K] = if (content.isEmpty) EmptyNode() else TreapNode(content)
+  def apply[K](content: Seq[NodeContent[K]])(implicit ord:Ordering[K]): Treap[K] = if (content.isEmpty) EmptyNode() else TreapNode(content)
   def unapply[K](arg: Treap[K]): Option[(NodeContent[K], Treap[K], Treap[K])] = if (arg.isEmpty) Option.empty else Option(arg.base, arg.left, arg.right)
 
-  def merge[K](left: Treap[K], right: Treap[K])(implicit canCompare: K => Ordered[K]): Treap[K] = {
+  def merge[K](left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]): Treap[K] = {
     if (left.isEmpty) return right
     if (right.isEmpty) return left
 
@@ -56,10 +56,10 @@ object Treap {
       new TreapNode(right.base, merge(left, right.left), right.right)
   }
 
-  def split[K](root: Treap[K], middle: K)(implicit canCompare: K => Ordered[K]): (Treap[K], Treap[K]) = root match {
+  def split[K](root: Treap[K], middle: K)(implicit ord:Ordering[K]): (Treap[K], Treap[K]) = root match {
     case EmptyNode() => (EmptyNode(), EmptyNode())
     case TreapNode(base, left, right) =>
-      if (base.key <= middle) {
+      if (ord.lteq(base.key, middle)) {
         val (l, r) = split(right, middle)
         (new TreapNode(base, left, l), r)
       } else {
@@ -68,7 +68,7 @@ object Treap {
       }
   }
 
-  def splitRightest[K](root: Treap[K])(implicit canCompare: K => Ordered[K]): (Treap[K], Option[NodeContent[K]]) = root match {
+  def splitRightest[K](root: Treap[K])(implicit ord:Ordering[K]): (Treap[K], Option[NodeContent[K]]) = root match {
     case EmptyNode() => (EmptyNode(), Option.empty)
     case TreapNode(base, left, right) =>
       if (right.isEmpty)
@@ -79,7 +79,7 @@ object Treap {
       }
   }
 
-  def addInsert[K](root: Treap[K], key: K, addNumber: Int)(implicit canCompare: K => Ordered[K]): Treap[K] = {
+  def addInsert[K](root: Treap[K], key: K, addNumber: Int)(implicit ord:Ordering[K]): Treap[K] = {
     val (lowerOrEqual, greater) = split(root, key)
     val (lower, lowerMaybeEqual) = splitRightest(lowerOrEqual)
     val (l, equalContent) = lowerMaybeEqual.map(content =>
