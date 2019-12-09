@@ -1,6 +1,7 @@
 package ru.spbau.jvm.scala.treap
 
-class TreapMultiSet[K] private (val root: Treap[K]) {
+class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
+  import Treap._
 
   def this(keys: K*)(implicit ord: Ordering[K]) = this({
     var contents: Seq[NodeContent[K]] = Seq.empty
@@ -18,4 +19,10 @@ class TreapMultiSet[K] private (val root: Treap[K]) {
     last.foreach(lastKey => contents = NodeContent(lastKey, lastCount) +: contents)
     Treap(contents)(ord)
   })
+
+  def count(key: K): Int = {
+    val (lowerEqual, _) = split(root, key)
+    val (_, mightBeEqual) = splitRightest(lowerEqual)
+    mightBeEqual.map(c => if (ord.equiv(key, c.key)) c.number else 0).getOrElse(0)
+  }
 }
