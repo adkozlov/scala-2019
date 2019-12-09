@@ -123,13 +123,39 @@ class MultisetTest extends FunSuite {
     val a = new Multiset(0, 1, 2, 3)
     val b = Array(0, 0, 0, 0)
     a.foreach(x => b(x) += 1)
-    assert(b sameElements Array(1, 1, 1, 1))
+    assert(b.toList == Array(1, 1, 1, 1).toList)
   }
 
   test("For each with same elements") {
     val a = new Multiset(0, 2, 2, 0)
     val b = Array(0, 0, 0, 0)
     a.foreach(x => b(x) += 1)
-    assert(b sameElements Array(2, 0, 2, 0))
+    assert(b.toList == Array(2, 0, 2, 0).toList)
+  }
+
+  test("Contains existing element in set of one element") {
+    val a = new Multiset("aa")
+    assert(a.contains("aa"))
+  }
+
+  test("Contains nonexistent element in set of one element") {
+    val a = new Multiset("aa")
+    assert(!a.contains("bb"))
+  }
+
+  test("Contains existing element after remove") {
+    val a = new Multiset("aa", "bb", "a", "aa", "cd", "asd", "pj")
+    assert(a.contains("aa"))
+    a.remove("aa")
+    assert(a.contains("aa"))
+    a.remove("aa")
+    assert(!a.contains("aa"))
+  }
+
+  test("Contains after add and remove") {
+    val a = new Multiset(1, 2, 3, 4)
+    assert(!a.contains(10))
+    a.add(10)
+    assert(a.contains(10))
   }
 }

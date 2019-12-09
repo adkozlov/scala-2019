@@ -4,7 +4,7 @@ import scala.reflect.ClassTag
 
 class Multiset[A <% Ordered[A] : ClassTag]() {
 
-  private def this(tree: Tree[A]) {
+  private def this(tree: Option[Tree[A]]) {
     this()
     this.tree = tree
   }
@@ -14,7 +14,7 @@ class Multiset[A <% Ordered[A] : ClassTag]() {
     tree = Tree.build(elements.toArray)
   }
 
-  var tree: Tree[A] = _
+  var tree: Option[Tree[A]] = None
 
   def remove(x: A): Unit = {
     tree = Tree.remove(tree, x)
@@ -24,35 +24,52 @@ class Multiset[A <% Ordered[A] : ClassTag]() {
     tree = Tree.add(tree, x)
   }
 
-  def apply(x: A): Int = Tree.cnt(tree, x)
-
-  def |(other: Multiset[A]): Multiset[A] = {
-    var newTree = tree
-    for ((x, cnt) <- Tree.toPairsArray(other.tree)) {
-      newTree = Tree.add(newTree, x, cnt)
-    }
-    new Multiset[A](newTree)
-  }
+  def apply(x: A): Int = Tree.count(tree, x)
 
   def &(other: Multiset[A]): Multiset[A] = {
-    var newTree: Tree[A] = null
-    for (x <- Tree.getKeys(other.tree)) {
-      val min = Math.min(Tree.cnt(tree, x), Tree.cnt(other.tree, x))
-      if (min > 0) {
-        newTree = Tree.add(newTree, x, min)
+    var newTree: Option[Tree[A]] = None
+    Tree.forEach(other.tree, (x: A) => {
+      if (Tree.count(newTree, x) == 0) {
+        val its = math.min(Tree.count(tree, x), Tree.count(other.tree, x))
+        for (_ <- 1 to its) {
+          newTree = Tree.add(newTree, x)
+        }
       }
-    }
+    })
     new Multiset(newTree)
   }
 
-  def foreach(function: A => Any): Unit = {
-    Tree.toPairsArray(tree).flatMap(x => List.fill(x._2)(x._1)).foreach(function)
+  def contains(x: A): Boolean = Tree.count(tree, x) > 0
+
+  def |(other: Multiset[A]): Multiset[A] = {
+    var newTree: Option[Tree[A]] = None
+    Tree.forEach(tree, (x: A) => newTree = Tree.add(newTree, x))
+    Tree.forEach(other.tree, (x: A) => newTree = Tree.add(newTree, x))
+    new Multiset(newTree)
   }
 
-  def map[B: ClassTag](function: A => B)(implicit ev$1: B => Ordered[B]): Multiset[B] = new Multiset[B](Tree.map(tree, function))
+  def foreach(function: A => Any): Unit = Tree.forEach(tree, function)
+
+  def map[B: ClassTag](function: A => B)(implicit ev$1: B => Ordered[B]): Multiset[B]
+  = new Multiset[B](Tree.map(tree, function))
 
   def filter(function: A => Boolean): Multiset[A] = new Multiset(Tree.filter(tree, function))
 
-  override def toString: String = Tree.toPairsArray(tree).map(x => x._1 + " -> " + x._2).mkString("[", ", ", "]")
+  override def toString: String = {
+    var resultString = ""
+    resultString += "["
+    var newTree: Option[Tree[A]] = None
+    Tree.forEach(tree, (x: A) => {
+      if (Tree.count(newTree, x) == 0) {
+        if (newTree.isDefined) {
+          resultString += ", "
+        }
+        newTree = Tree.add(newTree, x)
+        resultString += x + " -> " + Tree.count(tree, x)
+      }
+    })
+    resultString += "]"
+    resultString
+  }
 }
 
