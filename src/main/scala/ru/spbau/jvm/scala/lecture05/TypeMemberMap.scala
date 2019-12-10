@@ -6,8 +6,7 @@ abstract class TypeMemberMap {
   type K <: AnyVal
   type V >: Null
 
-  final case class Entry(key: K = 42,
-                         value: V = "")
+  final case class Entry(key: K, value: V)
 
   def put(entry: Entry): this.type = this
 

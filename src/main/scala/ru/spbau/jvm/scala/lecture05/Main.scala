@@ -14,15 +14,15 @@ object Main extends App {
       override type V = String
     }
 
-    firstMap.put(firstMap.Entry())
-    //  firstMap.put(secondMap.Entry()) // compilation error (path mismatch)
+    firstMap.put(firstMap.Entry(42, ""))
+    //  firstMap.put(secondMap.Entry(42, "")) // compilation error (path mismatch)
   }
 
   {
     val firstMap: IntToString = new GenericMap[Int, String]
     val secondMap: IntToString = new GenericMap[Int, String]
 
-    firstMap.put(firstMap.Entry())
-    firstMap.put(secondMap.Entry()) // no compilation error
+    firstMap.put(firstMap.Entry(42, ""))
+    firstMap.put(secondMap.Entry(42, "")) // no compilation error
   }
 }
