@@ -76,16 +76,44 @@ sealed trait Tree[K, V] {
     }
   }
 
-  def toList(implicit ord: Ordering[K]): List[(K, V)] = {
+  def getSize(left: Tree[K, V], right: Tree[K, V]): Int = {
+    left.size + right.size + 1
+  }
+
+  def foreach[U](f: V => U): Unit = {
     this match {
-      case Node(key, value, _, _, leftChild, rightChild) =>
-        leftChild.toList ++ List((key, value)) ++ rightChild.toList
-      case Leaf() => List.empty
+      case Node(_, value, _, _, leftChild, rightChild) =>
+        leftChild.foreach(f)
+        f(value)
+        rightChild.foreach(f)
+      case Leaf() => Leaf()
     }
   }
 
-  def getSize(left: Tree[K, V], right: Tree[K, V]): Int = {
-    left.size + right.size + 1
+  def map[U](f: V => U)(implicit ord: Ordering[K]): Tree[K, U] = {
+    this match {
+      case Node(key, value, priority, size, leftChild, rightChild) =>
+        Node(key, f(value), priority, size, leftChild.map(f), rightChild.map(f))
+      case Leaf() => Leaf()
+    }
+  }
+
+  def flatMap[U](f: V => Tree[K, U])(implicit ord: Ordering[K]): Tree[K, U] = {
+    this match {
+      case Node(_, value, _, _, leftChild, rightChild) =>
+        leftChild.flatMap(f).merge(f(value)).merge(rightChild.flatMap(f))
+      case Leaf() => Leaf()
+    }
+  }
+
+  def withFilter(p: V => Boolean)(implicit ord: Ordering[K]): Tree[K, V] = {
+    this match {
+      case Node(key, value, priority, size, leftChild, rightChild) =>
+        val lNew = leftChild.withFilter(p)
+        val rNew = rightChild.withFilter(p)
+        if (p(value)) Node(key, value, priority, size, lNew, rNew) else lNew.merge(rNew)
+      case Leaf() => Leaf()
+    }
   }
 }
 
@@ -95,4 +123,10 @@ case class Node[K, V](override val key: K, override val value: V, override val p
 
 case class Leaf[K, V]() extends Tree[K, V]() {
   override def size = 0
+}
+
+sealed class Pair[K, V](val key: K, val value: V)
+
+object Pair {
+  def apply[K, V](key: K, value: V): Pair[K, V] = new Pair(key, value)
 }

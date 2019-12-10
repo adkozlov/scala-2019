@@ -6,8 +6,8 @@ class MultiSetTest extends FlatSpec with Matchers {
   private val initList = List(1, 2, 2, 3, 4, 5, 5, 9, 9, 9)
 
   "MultiSet" should "be correctly initialized" in {
-    MultiSet[Int](initList).toString should be ("[1 -> 1, 2 -> 2, 3 -> 1, 4 -> 1, 5 -> 2, 9 -> 3]")
-    MultiSet[Int](List.empty).toString should be ("[]")
+    MultiSet[Int](initList : _*).toString should be ("[1 -> 1, 2 -> 2, 3 -> 1, 4 -> 1, 5 -> 2, 9 -> 3]")
+    MultiSet[Int](List.empty : _*).toString should be ("[]")
     MultiSet[Int](22).toString should be ("[22 -> 1]")
   }
 
@@ -30,7 +30,7 @@ class MultiSetTest extends FlatSpec with Matchers {
     testSet.add(1).add(2).add(2).add(1).size should be (4)
     testSet.add(1).add(2).add(2).add(1).add(-1).size should be (5)
 
-    val testSet1 = MultiSet[Int](initList)
+    val testSet1 = MultiSet[Int](initList : _*)
     testSet1.remove(1).size should be (9)
     testSet1.remove(1).remove(2).size should be (8)
     testSet1.remove(1).remove(2).remove(2).size should be (7)
@@ -43,7 +43,7 @@ class MultiSetTest extends FlatSpec with Matchers {
   }
 
   "remove" should "work correctly" in {
-    val testSet = MultiSet[Int](initList)
+    val testSet = MultiSet[Int](initList : _*)
 
     testSet.remove(1).toString should be ("[2 -> 2, 3 -> 1, 4 -> 1, 5 -> 2, 9 -> 3]")
     testSet.remove(1).remove(2).toString should be ("[2 -> 1, 3 -> 1, 4 -> 1, 5 -> 2, 9 -> 3]")
@@ -54,8 +54,8 @@ class MultiSetTest extends FlatSpec with Matchers {
   }
 
   "&" should "work correctly" in {
-    val testSet1 = MultiSet[Int](initList)
-    val testSet2 = MultiSet[Int](initList)
+    val testSet1 = MultiSet[Int](initList : _*)
+    val testSet2 = MultiSet[Int](initList : _*)
     val testSet3 = MultiSet[Int]().add(228).add(322).add(228).add(1).add(2)
 
     (testSet1 & testSet2).toString should be ("[1 -> 2, 2 -> 4, 3 -> 2, 4 -> 2, 5 -> 4, 9 -> 6]")
@@ -63,8 +63,8 @@ class MultiSetTest extends FlatSpec with Matchers {
   }
 
   "|" should "work correctly" in {
-    val testSet1 = MultiSet[Int](initList)
-    val testSet2 = MultiSet[Int](initList)
+    val testSet1 = MultiSet[Int](initList : _*)
+    val testSet2 = MultiSet[Int](initList : _*)
     val testSet3 = MultiSet[Int]().add(228).add(322).add(228)
 
     (testSet1 | testSet2).toString should be ("[1 -> 2, 2 -> 4, 3 -> 2, 4 -> 2, 5 -> 4, 9 -> 6]")
@@ -73,7 +73,7 @@ class MultiSetTest extends FlatSpec with Matchers {
   }
 
   "for comprehensions" should "work correctly" in {
-    val testSet = MultiSet[Int](initList)
+    val testSet = MultiSet[Int](initList : _*)
 
     var counter = 0
     for (i <- testSet if testSet.contains(i)) {
@@ -83,7 +83,7 @@ class MultiSetTest extends FlatSpec with Matchers {
   }
 
   "get from set" should "work correctly" in {
-    val testSet = MultiSet[Int](initList)
+    val testSet = MultiSet[Int](initList : _*)
 
     testSet(1) should be (1)
     testSet(2) should be (2)
@@ -91,16 +91,16 @@ class MultiSetTest extends FlatSpec with Matchers {
   }
 
   "map" should "work correctly" in {
-    val testSet = MultiSet[Int](initList)
+    val testSet = MultiSet[Int](initList : _*)
 
     testSet.map(it => 5 + it).toString should be ("[6 -> 1, 7 -> 2, 8 -> 1, 9 -> 1, 10 -> 2, 14 -> 3]")
     testSet.map(_ => 2).toString should be ("[2 -> 10]")
   }
 
   "flatMap" should "work correctly" in {
-    val testSet = MultiSet[Int](initList)
+    val testSet = MultiSet[Int](initList : _*)
 
-    testSet.flatMap(it => List(it, 5 + it)).toString should be ("[1 -> 1, 2 -> 2, 3 -> 1, 4 -> 1, 5 -> 2, 6 -> 1, " +
+    testSet.flatMap(it => MultiSet(5 + it) | MultiSet(it)).toString should be ("[1 -> 1, 2 -> 2, 3 -> 1, 4 -> 1, 5 -> 2, 6 -> 1, " +
       "7 -> 2, 8 -> 1, 9 -> 4, 10 -> 2, 14 -> 3]")
   }
 }
