@@ -124,9 +124,3 @@ case class Node[K, V](override val key: K, override val value: V, override val p
 case class Leaf[K, V]() extends Tree[K, V]() {
   override def size = 0
 }
-
-sealed class Pair[K, V](val key: K, val value: V)
-
-object Pair {
-  def apply[K, V](key: K, value: V): Pair[K, V] = new Pair(key, value)
-}
