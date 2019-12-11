@@ -58,8 +58,8 @@ class MultiSetTest extends FlatSpec with Matchers {
     val testSet2 = MultiSet[Int](initList : _*)
     val testSet3 = MultiSet[Int]().add(228).add(322).add(228).add(1).add(2)
 
-    (testSet1 & testSet2).toString should be ("[1 -> 2, 2 -> 4, 3 -> 2, 4 -> 2, 5 -> 4, 9 -> 6]")
-    (testSet1 & testSet3).toString should be ("[1 -> 2, 2 -> 3]")
+    (testSet1 & testSet2).toString should be ("[1 -> 1, 2 -> 2, 3 -> 1, 4 -> 1, 5 -> 2, 9 -> 3]")
+    (testSet1 & testSet3).toString should be ("[1 -> 1, 2 -> 1]")
   }
 
   "|" should "work correctly" in {

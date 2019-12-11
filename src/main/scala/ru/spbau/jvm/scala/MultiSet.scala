@@ -101,8 +101,8 @@ class MultiSet[V](private val count: Int = 0, private val tree: Tree[V, Pair[V, 
     var multiSet = MultiSet()
 
     for (node1 <- tree; node2 <- other.tree if node2.key == node1.key) {
-      forCopy(x => multiSet = multiSet.add(x))(node1)
-      forCopy(x => multiSet = multiSet.add(x))(node2)
+      forCopy(x => multiSet = multiSet.add(x))(
+        Pair(node1.key, if (node1.value < node2.value) node1.value else node2.value))
     }
 
     multiSet
