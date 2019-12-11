@@ -98,8 +98,14 @@ class MultiSet[A <: Ordered[A]] {
   }
 
   override def toString: String = {
-    var result: Seq[String] = Seq.empty
-    foreachCount((value, count) => result = result :+ s"$value -> $count")
-    result.mkString("[", ", ", "]")
+    var result: String = "["
+
+    foreachCount((value, count) => result = result + value.toString + " -> " + count.toString + ", ")
+    if (result.charAt(result.length - 1) == ' ') {
+      result = result.substring(0, result.length - 2)
+    }
+
+    result += "]"
+    return result
   }
 }

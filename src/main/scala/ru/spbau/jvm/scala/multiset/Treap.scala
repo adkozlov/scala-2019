@@ -2,9 +2,6 @@ package ru.spbau.jvm.scala.multiset
 
 import scala.util.Random
 
-/**
- * TODO
- */
 class Treap[T <: Ordered[T]] {
 
   class Node(
@@ -41,11 +38,11 @@ class Treap[T <: Ordered[T]] {
 
   private def merge(l: Option[Node], r: Option[Node]): Option[Node] = {
     if (l.isEmpty) {
-      return r;
+      return r
     }
 
     if (r.isEmpty) {
-      return l;
+      return l
     }
 
     if (l.get.priority < r.get.priority) {
@@ -162,9 +159,5 @@ class Treap[T <: Ordered[T]] {
     foreach(v.get.leftChild, f)
     f(v.get.value)
     foreach(v.get.rightChild, f)
-  }
-
-  def main(args: Array[String]): Unit = {
-    println("Hello, world!")
   }
 }
