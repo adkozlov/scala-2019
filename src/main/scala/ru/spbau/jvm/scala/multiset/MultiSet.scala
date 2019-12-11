@@ -1,16 +1,81 @@
 package ru.spbau.jvm.scala.multiset
 
-class MultiSet[K](private var _size: Int = 0, private var tree: Tree[(K, Int)] = Leaf[(K, Int)]())(implicit ordering: Ordering[K]) extends Collection[K] {
-  override def size(): Int = _size
+import scala.math.min
+
+class MultiSet[K](private var tree: Tree[(K, Int)] = Leaf[(K, Int)]())(implicit ordering: Ordering[K]) extends Collection[K] {
+  override def size(): Int = tree.size
 
   override def contains(key: K): Boolean = tree match {
     case Leaf() => false
-    case node: Node[K] =>
+    case node: Node[(K, Int)] =>
       tree = node.find((key, 0)).splay()
-      ordering.equiv(tree.key._1, key)
+      tree match {
+        case node: Node[(K, Int)] => ordering.equiv(node.key._1, key)
+        case _ => false
+      }
   }
 
-  def iterator(): Iterator[(K, Int)] = new MultiSetIterator[K](tree.findMin())
+  def count(key: K): Int = {
+    if (!contains(key)) 0
+    else {
+      tree match {
+        case Leaf() => 0
+        case node: Node[(K, Int)] => node.key._2
+      }
+    }
+  }
+  def iterator(): Iterator[(K, Int)] = tree match {
+    case Leaf() => new MultiSetIterator[K](Leaf(), 0)
+    case node: Node[(K, Int)] =>  new MultiSetIterator[K](node.findMin(), node.size)
+  }
+
+  override def add(key: K): Unit = {
+    insert(key, 1)
+  }
+
+  private def insert(key: K, cnt: Int): (K, Int) = {
+    val (left, right) = tree.split((key, 0))
+    right match {
+      case right: Node[(K, Int)] =>
+        if (ordering.equiv(right.key._1, key)) {
+          val (_, oldNum) = right.key
+          right.key = (right.key._1, right.key._2 + cnt)
+          tree = left.merge(right)
+          return (key, oldNum + cnt)
+        }
+      case _ =>
+    }
+    tree = left.merge(new Node[(K, Int)]((key, cnt), Leaf(), Leaf()).merge(right))
+    (key, cnt)
+  }
+
+  override def remove(key: K): Unit = {
+    delete(key)
+  }
+
+  private def delete(key: K): (K, Int) = {
+    val (left, right) = tree.split((key, 0))
+    right match {
+      case right: Node[(K, Int)] =>
+      if (right.key._1 == key) {
+        if (right.key._2 == 1) {
+          tree = left.merge(right.left.merge(right.right))
+          return (key, 1)
+        } else {
+          val (_, oldNum) = right.key
+          right.key = (right.key._1, right.key._2 - 1)
+          tree = left.merge(right)
+          return (key, oldNum)
+        }
+      }
+    }
+    tree = left.merge(right)
+    (key, 0)
+  }
+
+  override def clear(): Unit = {
+    tree = Leaf()
+  }
 
   def foreach(f: K => Unit): Unit = {
     val it = iterator()
@@ -28,7 +93,7 @@ class MultiSet[K](private var _size: Int = 0, private var tree: Tree[(K, Int)] =
 
   def foldLeft[T](z: T)(f: (T, K) => T): T = {
     var acc = z
-    foreach(x => acc = f.apply(acc, x))
+    foreach(it => acc = f.apply(acc, it))
     acc
   }
 
@@ -44,66 +109,26 @@ class MultiSet[K](private var _size: Int = 0, private var tree: Tree[(K, Int)] =
     foldr(iterator())
   }
 
-  override def add(key: K): Unit = {
-    insert(key, 1)
-  }
-
-  private def insert(key: K, cnt: Int): (K, Int) = {
-    val (left, right) = tree.split((key, 0))
-    if (ordering.equiv(right.key._1, key)) {
-      val (_, oldNum) = right.key
-      right.key = (right.key._1, right.key._2 + 1)
-      tree = left.merge(right)
-      (key, oldNum + cnt)
-    } else {
-      tree = left.merge(new Node[(K, Int)]((key, 1)).merge(right))
-      (key, cnt)
-    }
-  }
-
-  override def remove(key: K): Unit = {
-    delete(key)
-  }
-
-  private def delete(key: K): (K, Int) = {
-    val (left, right) = tree.split((key, 0))
-    if (right.key._1 == key) {
-      if (right.key._2 == 1) {
-        tree = left.merge(right.left.merge(right.right))
-        (key, 1)
-      } else {
-        val (_, oldNum) = right.key
-        right.key = (right.key._1, right.key._2 - 1)
-        tree = left.merge(right)
-        (key, oldNum)
-      }
-    } else {
-      tree = left.merge(right)
-      (key, 0)
-    }
-  }
-
-  override def clear(): Unit = {
-    tree = Leaf[(K, Int)]()
-  }
-
   def |(other: MultiSet[K]): MultiSet[K] = {
     val result = MultiSet[K]()
-    this.foreachPair(key => result.insert(key._1, key._2))
-    other.foreachPair(key => result.insert(key._1, key._2))
+    this.foreachPair(it => result.insert(it._1, it._2))
+    other.foreachPair(it => result.insert(it._1, it._2))
     result
   }
 
   def &(other: MultiSet[K]): MultiSet[K] = {
     val result = MultiSet[K]()
-    this.foreachPair(it => if (other.contains(it._1)) result.insert(it._1, it._2))
+    this.foreachPair(it => if (other.contains(it._1)) result.insert(it._1, min(it._2, other.count(it._1))))
     result
   }
 
-  override def toString(): String = {
-    val list: List[String] = List[String]()
-    foreachPair(it => list.appended(s"${it._1} -> ${it._2}"))
-    list.mkString("[", ", ", "]")
+  override def toString: String = {
+    var result: String = "["
+    foreachPair(it => result += s"${it._1} -> ${it._2}, ")
+    if (result.length > 1) {
+      result = result.substring(0, result.length - 2)
+    }
+    result + "]"
   }
 }
 
@@ -117,36 +142,45 @@ object MultiSet {
   }
 }
 
-class MultiSetIterator[K](private var tree: Tree[(K, Int)]) extends Iterator[(K, Int)] {
+class MultiSetIterator[K](private var tree: Tree[(K, Int)], private var size: Int) extends Iterator[(K, Int)] {
 
-  var leftOnPath = 0
-  var curKey: (K, Int) = tree.key
+  var nextKey: (K, Int) = tree match {
+    case Leaf() => null
+    case node: Node[(K, Int)] => node.key
+  }
+  var ind: Int = 0
 
   override def hasNext: Boolean = {
-    curKey._2 > 0 || leftOnPath > 0 || tree.right.size > 1
+    ind < size
   }
 
   override def next(): (K, Int) = {
-    if (curKey._2 == 0) {
+    val curKey = nextKey
+    if (ind < size - 1) {
       tree match {
-        case Leaf() => tree = Leaf[(K, Int)]()
-        case node: Node[(K, Int)] => node.right match {
+        case _node: Node[(K, Int)] => _node.right match {
           case Leaf() =>
-            while (tree.isRightChild) {
-              tree = tree.parent
+            var node = _node
+            while (node.isRightChild) {
+              node.parent match {
+                case parent: Node[(K, Int)] =>
+                  node = parent
+              }
             }
-            leftOnPath -= 1
-          case r: Node[(K, Int)] =>
-            tree = r
-            while (tree.left.size != 0) {
-              tree = tree.left
-              leftOnPath += 1
+            node.parent match {
+              case parent: Node[(K, Int)] =>
+                node = parent
             }
+            tree = node
+            nextKey = node.key
+          case right: Node[(K, Int)] =>
+            val node = right.findMin()
+            tree = node
+            nextKey = node.key
         }
       }
-      curKey = tree.key
     }
-    curKey = (curKey._1, curKey._2 - 1)
+    ind += 1
     curKey
   }
 }

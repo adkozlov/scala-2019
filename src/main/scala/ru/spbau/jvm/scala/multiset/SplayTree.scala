@@ -1,74 +1,103 @@
 package ru.spbau.jvm.scala.multiset
 
-abstract sealed class Tree[K](implicit ordering: Ordering[K]) {
+abstract sealed class Tree[K] {
 
   var size: Int
-  var parent: Tree[K]
-  var left: Tree[K]
-  var right: Tree[K]
-  var key: K
 
-  private def recalc(tree: Tree[K]): Unit = tree match {
-    case Node(_, left, right) => tree.size = left.size + right.size + 1
-  }
-
-  // <= x / > x
-  def split(key: K): (Tree[K], Tree[K]) = this match {
-    case _: Leaf[K] => (new Leaf[K], new Leaf[K])
+  // < x / >= x
+  def split(key: K)(implicit ordering: Ordering[K]): (Tree[K], Tree[K]) = this match {
+    case Leaf() => (Leaf(), Leaf())
     case tree: Node[K] =>
       val node = tree.find(key).splay()
-      if (ordering.gt(key, node.key)) {
-        val left = node.left
-        node.left = new Leaf
-        recalc(node)
-        (left, node)
-      } else {
-        val right = node.right
-        node.right = new Leaf
-        recalc(node)
-        (node, right)
+      if (ordering.lt(node.key, key)) {
+        return (node, Leaf())
       }
+      val left = node.left
+      node.left = Leaf()
+      node.recalc()
+      left match {
+        case Leaf() =>
+        case _left: Node[K] => _left.parent = Leaf()
+      }
+      (left, node)
+
   }
 
   def merge(rightTree: Tree[K]): Tree[K] = {
     (this, rightTree) match {
-      case (Leaf(), Leaf()) => new Leaf
+      case (Leaf(), Leaf()) => Leaf()
       case (Leaf(), _) => rightTree
       case (_, Leaf()) => this
       case (l: Node[K], r: Node[K]) =>
-        val node = l.findMin().splay()
-        node.right = r
-        r.parent = node
-        recalc(node)
+        val node = r.findMin().splay()
+        node.left = l
+        l.parent = node
+        node.recalc()
         node
     }
   }
 
+   def printTree(ident: String = ""): Unit = this match {
+    case Leaf() =>
+    case Node(key, left, right) =>
+      right.printTree(ident + "  ")
+      print(ident)
+      println(key)
+      left.printTree(ident + "  ")
+  }
 
-  def findMin(): Tree[K] = this.left match {
+}
+
+case class Node[K](var key: K, var left: Tree[K], var right: Tree[K])(implicit ordering: Ordering[K]) extends Tree[K]() {
+  override var size: Int = 1 + left.size + right.size
+  left match {
+    case Leaf() =>
+    case left: Node[K] => left.parent = this
+  }
+  right match {
+    case Leaf() =>
+    case right: Node[K] => right.parent = this
+  }
+  var parent: Tree[K] = Leaf()
+
+  def recalc(): Unit = {
+    this.size = left.size + right.size + 1
+  }
+
+  def isLeftChild: Boolean = this.parent match {
+    case Leaf() => false
+    case p: Node[K] => p.left == this
+  }
+
+  def isRightChild: Boolean = this.parent match {
+    case Leaf() => false
+    case p: Node[K] => p.right == this
+  }
+
+  def findMin(): Node[K] = this.left match {
     case Leaf() => this
     case left: Node[K] => left.findMin()
   }
 
-
-  // min x: x >= k
-  def find(_key: K): Tree[K] = {
-    if (ordering.lt(_key, this.key)) {
-      this.left match {
-        case Leaf() => this
-        case left: Node[K] => left.find(_key)
+  // min x: x >= k (lower_bound)
+  def find(_key: K)(implicit ordering: Ordering[K]): Node[K] = {
+    var tmp: Node[K] = this
+    var node: Tree[K] = this
+    while (node.size > 0)
+      node match {
+        case _node: Node[K] =>
+          if (ordering.lteq(_key, _node.key)) {
+            tmp = _node
+            node = _node.left
+          } else {
+            node = _node.right
+          }
+        case _ =>
       }
-    } else if (ordering.equiv(_key, this.key)) {
-      this
-    } else {
-      this.right match {
-        case Leaf() => this
-        case right: Node[K] => right.find(_key)
-      }
-    }
+    tmp
   }
 
-  def splay(): Tree[K] = {
+  def splay(): Node[K] = {
     val node = this
     node.parent match {
       case Leaf() => node
@@ -96,17 +125,16 @@ abstract sealed class Tree[K](implicit ordering: Ordering[K]) {
               // zig-zag
             } else if (node.isRightChild) {
               rotateLeft(parent)
-              rotateRight(parent)
+              rotateRight(grandpa)
               node.splay()
             } else {
               rotateRight(parent)
-              rotateLeft(parent)
+              rotateLeft(grandpa)
               node.splay()
             }
         }
     }
   }
-
   //     node                  right
   //    / \                    / \
   //   /   \                node  \
@@ -123,6 +151,7 @@ abstract sealed class Tree[K](implicit ordering: Ordering[K]) {
         } else {
           parent.right = node.right
         }
+      case _ =>
     }
     node.right match {
       case right: Node[K] =>
@@ -131,9 +160,12 @@ abstract sealed class Tree[K](implicit ordering: Ordering[K]) {
         right.left = node
         node.parent = right
         node.right = alpha
-        alpha.parent = node
-        recalc(node)
-        recalc(right)
+        alpha match {
+          case alpha: Node[K] => alpha.parent = node
+          case _ =>
+        }
+        node.recalc()
+        right.recalc()
     }
   }
 
@@ -150,10 +182,11 @@ abstract sealed class Tree[K](implicit ordering: Ordering[K]) {
     node.parent match {
       case parent: Node[K] =>
         if (node.isLeftChild) {
-          parent.left = node.right
+          parent.left = node.left
         } else {
-          parent.right = node.right
+          parent.right = node.left
         }
+      case _ =>
     }
     node.left match {
       case left: Node[K] =>
@@ -162,32 +195,20 @@ abstract sealed class Tree[K](implicit ordering: Ordering[K]) {
         left.right = node
         node.parent = left
         node.left = beta
-        beta.parent = node
-        recalc(node)
-        recalc(left)
+        beta match {
+          case beta: Node[K] => beta.parent = node
+          case _ =>
+        }
+        node.recalc()
+        left.recalc()
     }
   }
-
-  def isLeftChild: Boolean = this.parent match {
-    case _: Leaf[K] => false
-    case p: Node[K] => p.left == this
-  }
-
-  def isRightChild: Boolean = this.parent match {
-    case _: Leaf[K] => false
-    case p: Node[K] => p.right == this
-  }
 }
 
-case class Node[K](var key: K, var left: Tree[K] = Leaf[K](), var right: Tree[K] = Leaf[K]())(implicit ordering: Ordering[K]) extends Tree[K] {
-      override var size: Int = 1
-      var parent: Tree[K] = _
-}
-
-case class Leaf[K] extends Tree[K] {
+case class Leaf[K]() extends Tree[K]() {
   override var size: Int = 0
-  override var parent: Tree[K] = _
-  override var left: Tree[K] = _
-  override var right: Tree[K] = _
-  override var key: K = _
+}
+
+object Leaf {
+  def apply[K](): Leaf[K] = new Leaf()
 }
