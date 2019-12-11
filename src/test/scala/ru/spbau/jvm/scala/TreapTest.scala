@@ -1,48 +1,79 @@
 package ru.spbau.jvm.scala
 
 import org.scalatest.{FlatSpec, Matchers}
+import ru.spbau.jvm.scala.treap.{Leaf, Node, Treap}
 
 class TreapTest extends FlatSpec with Matchers {
-  "Insert" should "ok" in {
-    new Treap(3, 7).insert(1, 2).insert(4, 1).toList should be(
-      List((1, 2), (3, 7), (4, 1))
+  "SplitAndMerge" should "ok" in {
+    val tree =
+      Node(3, 7, Node(1, 2, Leaf(), Leaf()), Node(4, 1, Leaf(), Leaf()))
+    val splitTrees = Treap.split(3, tree)
+
+    splitTrees should be(
+      (
+        Node(1, 2, Leaf(), Leaf()),
+        Node(3, 7, Leaf(), Node(4, 1, Leaf(), Leaf()))
+      )
     )
+
+    Treap.merge(splitTrees._1, splitTrees._2) should be(tree)
   }
 
-  "Remove" should "ok" in {
-    var treap = new Treap(3, 7).insert(1, 2).insert(4, 1)
-    treap.toList should be(List((1, 2), (3, 7), (4, 1)))
+  "InsertAndRemove" should "ok" in {
+    var tree = Treap.insert(3, 7, Leaf())
+    tree = Treap.insert(1, 2, tree)
+    tree = Treap.insert(4, 1, tree)
+    tree should be(
+      Node(3, 7, Node(1, 2, Leaf(), Leaf()), Node(4, 1, Leaf(), Leaf()))
+    )
 
-    val remove3 = treap.remove(3)
+    val remove3 = Treap.remove(3, tree)
     remove3._1 should be(Some(7))
-    treap = remove3._2
-    treap.toList should be(List((1, 2), (4, 1)))
+    tree = remove3._2
+    tree should be(Node(1, 2, Leaf(), Node(4, 1, Leaf(), Leaf())))
 
-    val remove1 = treap.remove(1)
+    val remove1 = Treap.remove(1, tree)
     remove1._1 should be(Some(2))
-    treap = remove1._2
-    treap.toList should be(List((4, 1)))
+    tree = remove1._2
+    tree should be(Node(4, 1, Leaf(), Leaf()))
 
-    val remove7 = treap.remove(7)
+    val remove7 = Treap.remove(7, tree)
     remove7._1 should be(None)
-    treap = remove7._2
-    treap.toList should be(List((4, 1)))
+    tree = remove7._2
+    tree should be(Node(4, 1, Leaf(), Leaf()))
 
-    //    treap.remove(4)._1 should be(Some(1))
-    //    treap.remove(4)._2.toList should be(List())
-    //    treap.toList should be(List())
+    val remove4 = Treap.remove(4, tree)
+    remove4._1 should be(Some(1))
+    tree = remove4._2
+    tree should be(Leaf())
   }
 
-  "InsertRemove" should "ok" in {
-    var treap = new Treap(1, 1).insert(2, 1).insert(3, 1)
-    treap.toList should be(List((1, 1), (2, 1), (3, 1)))
+  "InsertAndGetPriByKey" should "ok" in {
+    var tree = Treap.insert(3, 7, Leaf())
+    tree = Treap.insert(1, 2, tree)
+    tree = Treap.insert(4, 1, tree)
+    tree = Treap.insert(4, 3, tree)
+    tree should be(
+      Node(
+        3,
+        7,
+        Node(1, 2, Leaf(), Leaf()),
+        Node(4, 3, Leaf(), Node(4, 1, Leaf(), Leaf()))
+      )
+    )
 
-    val remove1 = treap.remove(1)
-    remove1._1 should be(Some(1))
-    treap = remove1._2
-    treap.toList should be(List((2, 1), (3, 1)))
+    Treap.getPriByKey(3, tree) should be(Some(7))
+    Treap.getPriByKey(1, tree) should be(Some(2))
+    Treap.getPriByKey(4, tree) should be(Some(3))
+  }
 
-    treap = treap.insert(1, 2)
-    treap.toList should be(List((1, 2), (2, 1), (3, 1)))
+  "Map" should "ok" in {
+    var tree = Treap.insert(3, 7, Leaf())
+    tree = Treap.insert(1, 2, tree)
+    tree = Treap.insert(4, 1, tree)
+
+    Treap.toString(Treap.map((x: Int) => if (x == 1) 5 else x, tree)) should be(
+      " 3->7  5->2  4->1 "
+    )
   }
 }
