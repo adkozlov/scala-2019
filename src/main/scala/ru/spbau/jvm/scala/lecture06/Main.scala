@@ -17,5 +17,8 @@ object Main {
     val hello: String = list.head
     val world: String = list.tail.tail.tail.head
     println(s"$hello $world")
+
+    val zip = helloPrefix zip worldSuffix
+    println(zip)
   }
 }
