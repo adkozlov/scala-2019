@@ -16,5 +16,4 @@ package object lecture06 {
      (implicit appendable: Appendable[Prefix, List, Result]): Result =
       appendable(prefix, list)
   }
-
 }
