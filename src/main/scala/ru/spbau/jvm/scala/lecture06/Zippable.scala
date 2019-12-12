@@ -14,7 +14,7 @@ object Zippable {
     (_: First, _: Nil) => HNil
 
 
-  implicit def firsSecondNilZippable: Zippable[Nil, Nil, Nil] =
+  implicit def firstSecondNilZippable: Zippable[Nil, Nil, Nil] =
     (_: Nil, _: Nil) => HNil
 
   implicit def zippable[Head1,
