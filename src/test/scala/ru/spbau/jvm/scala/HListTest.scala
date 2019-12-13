@@ -6,6 +6,10 @@ class HListTest extends FlatSpec with Matchers {
   private val notNilList1 = true :: "aaaa" :: 228 :: HNil
   private val notNilList2 = "ppppp" :: 1 :: notNilList1 :: false :: 42 :: HNil
 
+  "zip" should "work correctly when both lists are HNil" in {
+    HNil.zip(HNil) should be (HNil)
+  }
+
   "zip" should "work correctly when one the lists is HNil" in {
     HNil.zip(notNilList1) should be (HNil)
     notNilList1.zip(HNil) should be (HNil)

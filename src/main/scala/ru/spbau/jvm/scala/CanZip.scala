@@ -5,6 +5,8 @@ trait CanZip[List1 <: HList, List2 <: HList, Result <: HList] {
 }
 
 object CanZip {
+  implicit def bothNilCanZip[List <: HList]: CanZip[Nil, Nil, Nil] = (_: Nil, _: Nil) => HNil
+
   implicit def nil1CanZip[List <: HList]: CanZip[Nil, List, Nil] = (_: Nil, _: List) => HNil
 
   implicit def nil2CanZip[List <: HList]: CanZip[List, Nil, Nil] = (_: List, _: Nil) => HNil
