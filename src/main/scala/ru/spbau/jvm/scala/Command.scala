@@ -1,6 +1,6 @@
 package ru.spbau.jvm.scala
 
-import ru.spbau.jvm.scala.commands.{Actions, Avg, Calls, Help, Number, Total}
+import ru.spbau.jvm.scala.commands.{Actions, ActionsCost, Avg, Calls, Help, Number, RegisteredUsers, Total}
 
 trait Command {
   val name: String
@@ -10,7 +10,7 @@ trait Command {
 }
 
 object CommandManager {
-  val registeredCommands: List[Command] = List(Actions, Avg, Calls, Help, Number, Total)
+  val registeredCommands: List[Command] = List(Actions, Avg, Calls, Help, Number, Total, RegisteredUsers, ActionsCost)
 
   def runCommand(database: BillingDatabase, array: Array[String]): String =
     registeredCommands

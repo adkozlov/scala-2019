@@ -64,4 +64,9 @@ class InMemoryBillingDatabase(val users: TableWithId[User],
       .map { case (userId, _) => userPhones.filter(_._1 == userId).map(_._2) }
       .map { phoneIds => actions.values.filter(a => phoneIds.contains(a.phoneId)) }
 
+  override def registeredUsers: Iterable[User] =
+    users.values
+
+  override def userActionsCost(user: User, from: LocalDateTime, to: LocalDateTime): Option[Double] =
+    userActions(user, from, to).map(_.map { action: Action => action.count * operations(action.operationId).cost }.iterator.sum)
 }

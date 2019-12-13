@@ -20,4 +20,8 @@ trait BillingDatabase {
   def userPhone(user: User): Option[Iterable[Phone]]
 
   def userActions(user: User, from: LocalDateTime, to: LocalDateTime): Option[Iterable[Action]]
+
+  def registeredUsers: Iterable[User]
+
+  def userActionsCost(user: User, from: LocalDateTime, to: LocalDateTime): Option[Double]
 }
