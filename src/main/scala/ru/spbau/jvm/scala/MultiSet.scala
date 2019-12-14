@@ -4,6 +4,11 @@ import java.util.StringJoiner
 
 import scala.util.Random
 
+/**
+ * Implementation of multiset based on treap
+ *
+ * @param init elements to build treap with
+ */
 class MultiSet(private val init: Int*) {
   private val generator = new Random(42)
 
@@ -16,7 +21,7 @@ class MultiSet(private val init: Int*) {
   private var tree = Option.empty[Node]
   fillTree(init.toList)
 
-
+  /** Returns a new multiset that is an intersection of 2 given multisets */
   def &(that: MultiSet): MultiSet = {
     val result = new MultiSet()
     pairForeach(tree, (value: Int, count: Int) => {
@@ -27,6 +32,7 @@ class MultiSet(private val init: Int*) {
     result
   }
 
+  /** Returns a new multiset that is a union of 2 given multisets */
   def |(that: MultiSet): MultiSet = {
     val result = new MultiSet()
     foreach(value => result.add(value))
@@ -34,29 +40,35 @@ class MultiSet(private val init: Int*) {
     result
   }
 
+  /** Returns a new multiset constructed from the all values of the given multiset with the function applied */
   def map(f: Int => Int): MultiSet = {
     val newMultiSet = new MultiSet()
     this.foreach(value => newMultiSet.add(f(value)))
     newMultiSet
   }
 
+  /** Applies function to every value in the multiset */
   def foreach(f: Int => Unit): Unit = {
     foreach(tree, f)
   }
 
+  /** Returns size of the multiset */
   def size(): Int = {
     treeSize
   }
 
+  /** Returns if the value contains in the multiset */
   def contains(value: Int): Boolean = {
     get(value).nonEmpty
   }
 
+  /** Returns how many times the value occurs in the multiset */
   def getCount(value: Int): Int = {
     val node = get(value)
     if (node.isEmpty) 0 else node.get.count
   }
 
+  /** Adds one occurrence of the value to the multiset */
   def add(value: Int): Unit = {
     val getValue = get(value)
     if (getValue.isEmpty) {
@@ -66,6 +78,7 @@ class MultiSet(private val init: Int*) {
     }
   }
 
+  /** Removes one occurrence of the value from the multiset */
   def remove(value: Int): Unit = {
     val getValue = get(value)
     if (getValue.nonEmpty) {
@@ -77,7 +90,7 @@ class MultiSet(private val init: Int*) {
     }
   }
 
-  override def toString(): String = {
+  override def toString: String = {
     val stringJoiner = new StringJoiner(", ", "[", "]")
     pairForeach(tree, (value: Int, count: Int) => stringJoiner.add(value + " -> " + count))
     stringJoiner.toString
@@ -177,7 +190,7 @@ class MultiSet(private val init: Int*) {
       (t, r)
     }
     else {
-      val (l, r) = split(t.get.left, k);
+      val (l, r) = split(t.get.left, k)
       t.get.left = r
       (l, t)
     }
