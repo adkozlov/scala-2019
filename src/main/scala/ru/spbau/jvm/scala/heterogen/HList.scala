@@ -1,5 +1,5 @@
 package ru.spbau.jvm.scala
-package lecture06
+package heterogen
 
 sealed trait HList
 
