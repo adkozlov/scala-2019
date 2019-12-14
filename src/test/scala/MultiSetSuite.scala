@@ -3,8 +3,8 @@ import ru.spbau.jvm.scala.multiset.MultiSet
 
 class MultiSetSuite extends FunSuite {
   test("Empty set.") {
-    val ms = MultiSet[Int]
-    assert(ms.toString == "[]")
+    val ms = MultiSet[Int]()
+    assert(ms.isEmpty())
   }
 
   test("Non empty set.") {
@@ -22,7 +22,7 @@ class MultiSetSuite extends FunSuite {
   }
 
   test("Test add.") {
-    val ms = MultiSet[Int]
+    val ms = MultiSet[Int]()
     ms.add(3)
     assert(ms.getCount(3) == 1)
     ms.add(3)
@@ -32,7 +32,7 @@ class MultiSetSuite extends FunSuite {
   }
 
   test("Test remove") {
-    val ms = MultiSet[Int]
+    val ms = MultiSet[Int]()
     assert(ms.getCount(3) == 0)
     ms.remove(3)
     assert(ms.getCount(3) == 0)
@@ -75,18 +75,59 @@ class MultiSetSuite extends FunSuite {
 
   test("Test intersect.") {
     val multiSet = MultiSet(4, 8, 15, 16, 23, 42, 42)
-    assert((multiSet & MultiSet(42)).toString == "[42->1]")
-    assert((multiSet & MultiSet(43, 43, 43)).toString == "[]")
-    assert((multiSet & MultiSet(42, 42, 42)).toString == "[42->2]")
-    assert((multiSet & multiSet).toString == "[4->1,8->1,15->1,16->1,23->1,42->2]")
+
+    val ms1 = multiSet & MultiSet(42)
+    assert(ms1(42) == 1)
+
+    assert((multiSet & MultiSet(43, 43, 43)).isEmpty())
+
+    val ms2 = multiSet & MultiSet(42, 42, 42)
+    assert(ms2(42) == 2)
+
+    val ms3 = multiSet & multiSet
+    assert(ms3(4) == 1)
+    assert(ms3(8) == 1)
+    assert(ms3(15) == 1)
+    assert(ms3(16) == 1)
+    assert(ms3(23) == 1)
+    assert(ms3(42) == 2)
   }
 
   test("Test unite.") {
     val multiSet = MultiSet(4, 8, 15, 16, 23, 42, 42)
-    assert((multiSet | MultiSet(42)).toString == "[4->1,8->1,15->1,16->1,23->1,42->3]")
-    assert((multiSet | MultiSet(43, 43, 43)).toString == "[4->1,8->1,15->1,16->1,23->1,42->2,43->3]")
-    assert((multiSet | MultiSet(42, 42, 42)).toString == "[4->1,8->1,15->1,16->1,23->1,42->5]")
-    assert((multiSet | multiSet).toString == "[4->2,8->2,15->2,16->2,23->2,42->4]")
+
+    val ms1 = multiSet | MultiSet(42)
+    assert(ms1(4) == 1)
+    assert(ms1(8) == 1)
+    assert(ms1(15) == 1)
+    assert(ms1(16) == 1)
+    assert(ms1(23) == 1)
+    assert(ms1(42) == 3)
+
+    val ms2 = multiSet | MultiSet(43, 43, 43)
+    assert(ms2(4) == 1)
+    assert(ms2(8) == 1)
+    assert(ms2(15) == 1)
+    assert(ms2(16) == 1)
+    assert(ms2(23) == 1)
+    assert(ms2(42) == 2)
+    assert(ms2(43) == 3)
+
+    val ms3 = multiSet | MultiSet(42, 42, 42)
+    assert(ms3(4) == 1)
+    assert(ms3(8) == 1)
+    assert(ms3(15) == 1)
+    assert(ms3(16) == 1)
+    assert(ms3(23) == 1)
+    assert(ms3(42) == 5)
+
+    val ms4 = multiSet | multiSet
+    assert(ms4(4) == 2)
+    assert(ms4(8) == 2)
+    assert(ms4(15) == 2)
+    assert(ms4(16) == 2)
+    assert(ms4(23) == 2)
+    assert(ms4(42) == 4)
   }
 
   test("Test foreach.") {
@@ -98,12 +139,15 @@ class MultiSetSuite extends FunSuite {
 
   test("Test filter.") {
     val multiSet = MultiSet(1, 2, 3, 4)
-    assert(multiSet.filter(x => x % 2 == 0).toString() == "[2->1,4->1]")
+    val ms = multiSet.filter(x => x % 2 == 0)
+    assert(ms(2) == 1)
+    assert(ms(4) == 1)
   }
 
   test("Test map.") {
     val multiSet = MultiSet(1, 2)
-    assert(multiSet.map(x => x.toString + "a").toString() == "[1a->1,2a->1]")
+    val ms = multiSet.map(x => x.toString + "a")
+    assert(ms.toList == List("1a", "2a"))
   }
 
   test("Test get count.") {

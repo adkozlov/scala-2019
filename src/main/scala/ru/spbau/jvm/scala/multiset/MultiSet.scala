@@ -14,6 +14,8 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
     case None => None
   }
 
+  override def isEmpty(): Boolean = root.isEmpty
+
   def contains(key: A): Boolean = findData(key).isDefined
 
   def remove(key: A): Unit = findNode(key) match {
@@ -45,8 +47,8 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
     val it1 = dataIterator()
     val it2 = other.dataIterator()
     while (it1.hasNext && it2.hasNext) {
-      val data1 = it1.getNext
-      val data2 = it2.getNext
+      val data1 = it1.current
+      val data2 = it2.current
       ordering.compare(data1.key, data2.key) match {
         case 0 =>
           val minCount = scala.math.min(data1.count, data2.count)
@@ -65,8 +67,8 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
     val it1 = dataIterator()
     val it2 = other.dataIterator()
     while (it1.hasNext && it2.hasNext) {
-      val data1 = it1.getNext
-      val data2 = it2.getNext
+      val data1 = it1.current
+      val data2 = it2.current
       ordering.compare(data1.key, data2.key) match {
         case 0 =>
           val sumCount = data1.count + data2.count
@@ -106,15 +108,6 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
     builder.toString()
   }
 
-  def show(tab: String = "", node: Option[Node[Data]] = root): Unit = node match {
-    case Some(node) =>
-      val data = node.value
-      println(s"$tab(${data.key}, ${data.count})")
-      show(tab + "|l----", node.left)
-      show(tab + "|r----", node.right)
-    case None =>
-  }
-
   override def foreach[U](f: A => U): Unit = {
     val it = iterator()
     while (it.hasNext) {
@@ -123,7 +116,7 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
   }
 
   def map[B](f: A => B)(implicit ordering: Ordering[B]): Iterable[B] = {
-    val newMS = MultiSet[B](ordering)
+    val newMS = MultiSet[B]()
     val it = iterator()
     while (it.hasNext) {
       newMS.add(f(it.next()))
@@ -131,8 +124,8 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
     newMS
   }
 
-  override def filter(pred: A => Boolean): Iterable[A] = {
-    val newMS = MultiSet[A]
+  override def filter(pred: A => Boolean): MultiSet[A] = {
+    val newMS = MultiSet[A]()
     val it = iterator()
     while (it.hasNext) {
       val data = it.next()
@@ -150,16 +143,14 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
 
     override def hasNext: Boolean = node.isDefined
 
-    override def next: DataKey[A] = node match {
-      case Some(_) =>
-        val tmp = node.get.value
-        node = Node.nextNode(node.get)
-        tmp
-      case None => throw new NoSuchElementException
+    override def next: DataKey[A] = {
+      val ret = current
+      node = Node.nextNode(node.get)
+      ret
     }
 
-    def getNext: DataKey[A] = node match {
-      case Some(_) => node.get.value
+    def current: DataKey[A] = node match {
+      case Some(node) => node.value
       case None => throw new NoSuchElementException
     }
   }
@@ -168,7 +159,7 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
 
   class MultiSetIterator extends Iterator[A] {
     private val it = new MultiSetDataIterator
-    private var count: Int = if (it.hasNext) it.getNext.count else 0
+    private var count: Int = if (it.hasNext) it.current.count else 0
 
     override def hasNext: Boolean = count > 0
 
@@ -178,10 +169,10 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
       }
       count -= 1
       if (count > 0) {
-        it.getNext.key
+        it.current.key
       } else {
         val ret = it.next.key
-        count = if (it.hasNext) it.getNext.count else 0
+        count = if (it.hasNext) it.current.count else 0
         ret
       }
     }
@@ -234,10 +225,8 @@ class MultiSet[A](implicit val ordering: Ordering[A]) extends Iterable[A] {
 }
 
 object MultiSet {
-  def apply[A](implicit ordering: Ordering[A]) = new MultiSet[A]
-
   def apply[A](values: A*)(implicit ordering: Ordering[A]): MultiSet[A] = {
-    val m = MultiSet[A](ordering)
+    val m = new MultiSet[A]
     values.foreach(x => m.add(x))
     m
   }

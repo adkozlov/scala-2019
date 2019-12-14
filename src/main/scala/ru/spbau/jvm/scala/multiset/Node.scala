@@ -121,13 +121,18 @@ private object Node {
         Some(currentNode)
       case None =>
         var currentNode = node
-        while (currentNode.parent.isDefined
-          && currentNode.parent.get.right.isDefined
-          && currentNode.parent.get.right.get.eq(currentNode)) {
+        while (isRightSon(currentNode)) {
           currentNode = currentNode.parent.get
         }
         currentNode.parent
     }
+  }
+
+  private def isRightSon[A](node: Node[A]): Boolean = {
+    val hasParent = node.parent.isDefined
+    val parentHasRightSon = hasParent && node.parent.get.right.isDefined
+    val isRightSon = parentHasRightSon && node.parent.get.right.get.eq(node)
+    hasParent && parentHasRightSon && isRightSon
   }
 
   def deleteNode[A](delNode: Node[A]): Option[Node[A]] = {
