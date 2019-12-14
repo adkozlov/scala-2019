@@ -34,8 +34,7 @@ package object heterogen {
     : SplitAt[Head :: List, Suc[Index], (Head :: ListLeft, ListRight)] =
       (list, idx) => {
         val HCons(head, tail) = list
-        val Suc(prevIdx) = idx
-        val (left, right) = splitter(tail, prevIdx)
+        val (left, right) = splitter(tail, idx.pred)
         (head :: left, right)
       }
   }
