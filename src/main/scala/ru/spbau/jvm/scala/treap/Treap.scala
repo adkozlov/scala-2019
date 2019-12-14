@@ -1,10 +1,8 @@
 package ru.spbau.jvm.scala.treap
 
-import ru.spbau.jvm.scala.lecture03.List
-
 case class NodeContent[+K] private (key: K, number: Int, priority: Int)
 
-object NodeContent {
+private object NodeContent {
   def apply[K](key: K, number: Int, priority: Int = random.nextInt()): NodeContent[K] = new NodeContent[K](key, number, priority)
   private val random = scala.util.Random
 }
@@ -44,23 +42,9 @@ case object EmptyNode extends Treap[Nothing] {
 object TreapNode {
   def apply[K](base: NodeContent[K], left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]): TreapNode[K] = new TreapNode(base, left, right)
   def apply[K](base: NodeContent[K])(implicit ord:Ordering[K]): TreapNode[K] = new TreapNode(base, EmptyNode, EmptyNode)
-  def apply[K](content: List[NodeContent[K]])(implicit ord:Ordering[K]): TreapNode[K] = {
-    var minElement: Option[NodeContent[K]] = Option.empty
-    for (x <- content) {
-      if (minElement.forall(_.priority > x.priority))
-        minElement = Option(x)
-    }
-    if (minElement.isEmpty)
-      throw new IllegalArgumentException("empty list provided to a TreapNode")
-    else {
-      val base = minElement.get
-      new TreapNode[K](base, Treap(content.withFilter(p => ord.lt(p.key, base.key))), Treap(content.withFilter(p => ord.gt(p.key, base.key))))
-    }
-  }
 }
 
 object Treap {
-  def apply[K](content: List[NodeContent[K]])(implicit ord:Ordering[K]): Treap[K] = if (content.isEmpty) EmptyNode else TreapNode(content)
   def unapply[K](arg: Treap[K]): Option[(NodeContent[K], Treap[K], Treap[K])] = if (arg.isEmpty) Option.empty else Option(arg.base, arg.left, arg.right)
 
   def merge[K](left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]): Treap[K] = {
