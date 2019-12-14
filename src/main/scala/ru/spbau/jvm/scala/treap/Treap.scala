@@ -2,14 +2,14 @@ package ru.spbau.jvm.scala.treap
 
 import ru.spbau.jvm.scala.lecture03.List
 
-case class NodeContent[K] private (key: K, number: Int, priority: Int)
+case class NodeContent[+K] private (key: K, number: Int, priority: Int)
 
 object NodeContent {
   def apply[K](key: K, number: Int, priority: Int = random.nextInt()): NodeContent[K] = new NodeContent[K](key, number, priority)
   private val random = scala.util.Random
 }
 
-sealed trait Treap[K] {
+sealed trait Treap[+K] {
   def base: NodeContent[K]
   def left: Treap[K]
   def right: Treap[K]
@@ -21,7 +21,7 @@ sealed trait Treap[K] {
   }
 }
 
-case class TreapNode[K](base: NodeContent[K], left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]) extends Treap[K] {
+case class TreapNode[+K](base: NodeContent[K], left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]) extends Treap[K] {
   override val size: Int = left.size + right.size + 1
   override def isEmpty: Boolean = false
 
@@ -32,18 +32,18 @@ case class TreapNode[K](base: NodeContent[K], left: Treap[K], right: Treap[K])(i
   }
 }
 
-case class EmptyNode[K]() extends Treap[K] {
+case object EmptyNode extends Treap[Nothing] {
   override def base = throw new NoSuchElementException
   override def left = throw new UnsupportedOperationException
   override def right = throw new UnsupportedOperationException
   override val size: Int = 0
   override def isEmpty: Boolean = true
-  override def foreachOnce(f: (K, Int) => Unit): Unit = {}
+  override def foreachOnce(f: (Nothing, Int) => Unit): Unit = {}
 }
 
 object TreapNode {
   def apply[K](base: NodeContent[K], left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]): TreapNode[K] = new TreapNode(base, left, right)
-  def apply[K](base: NodeContent[K])(implicit ord:Ordering[K]): TreapNode[K] = new TreapNode(base, EmptyNode(), EmptyNode())
+  def apply[K](base: NodeContent[K])(implicit ord:Ordering[K]): TreapNode[K] = new TreapNode(base, EmptyNode, EmptyNode)
   def apply[K](content: List[NodeContent[K]])(implicit ord:Ordering[K]): TreapNode[K] = {
     var minElement: Option[NodeContent[K]] = Option.empty
     for (x <- content) {
@@ -60,7 +60,7 @@ object TreapNode {
 }
 
 object Treap {
-  def apply[K](content: List[NodeContent[K]])(implicit ord:Ordering[K]): Treap[K] = if (content.isEmpty) EmptyNode() else TreapNode(content)
+  def apply[K](content: List[NodeContent[K]])(implicit ord:Ordering[K]): Treap[K] = if (content.isEmpty) EmptyNode else TreapNode(content)
   def unapply[K](arg: Treap[K]): Option[(NodeContent[K], Treap[K], Treap[K])] = if (arg.isEmpty) Option.empty else Option(arg.base, arg.left, arg.right)
 
   def merge[K](left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]): Treap[K] = {
@@ -74,7 +74,7 @@ object Treap {
   }
 
   def split[K](root: Treap[K], middle: K)(implicit ord:Ordering[K]): (Treap[K], Treap[K]) = root match {
-    case EmptyNode() => (EmptyNode(), EmptyNode())
+    case EmptyNode => (EmptyNode, EmptyNode)
     case TreapNode(base, left, right) =>
       if (ord.lteq(base.key, middle)) {
         val (l, r) = split(right, middle)
@@ -86,7 +86,7 @@ object Treap {
   }
 
   def splitRightest[K](root: Treap[K])(implicit ord:Ordering[K]): (Treap[K], Option[NodeContent[K]]) = root match {
-    case EmptyNode() => (EmptyNode(), Option.empty)
+    case EmptyNode => (EmptyNode, Option.empty)
     case TreapNode(base, left, right) =>
       if (right.isEmpty)
         (left, Option(base))

@@ -6,7 +6,7 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
   import Treap._
 
   def this(keys: K*)(implicit ord: Ordering[K]) = this({
-    var root: Treap[K] = EmptyNode()
+    var root: Treap[K] = EmptyNode
     for (k <- keys) {
       root = Treap.addInsert(root, k, 1)(ord)
     }
@@ -35,7 +35,7 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
 
   def &(that: TreapMultiSet[K]): TreapMultiSet[K] = {
     val (smaller, bigger) = smallerBigger(that)
-    var resultRoot: Treap[K] = EmptyNode()
+    var resultRoot: Treap[K] = EmptyNode
     smaller.foreachOnce((element, count) => {
       val biggerCount = bigger.count(element)
       if (biggerCount != 0)
@@ -45,7 +45,7 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
   }
 
   def map[K2](f: K => K2)(implicit ord2: Ordering[K2]): TreapMultiSet[K2] = {
-    var resultRoot: Treap[K2] = EmptyNode()
+    var resultRoot: Treap[K2] = EmptyNode
     foreachOnce((element, count) => {
       resultRoot = addInsert(resultRoot, f(element), count)
     })
@@ -53,7 +53,7 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
   }
 
   def withFilter(f: K => Boolean): TreapMultiSet[K] = {
-    var resultRoot: Treap[K] = EmptyNode()
+    var resultRoot: Treap[K] = EmptyNode
     foreachOnce((element, count) => {
       if (f(element)) resultRoot = addInsert(resultRoot, element, count)
     })
