@@ -25,7 +25,7 @@ object Splittable {
     (index: Succ[Index], list: Head :: List) => {
       val HCons(head, tail) = list
       val Succ(prev) = index
-      val (left, right) = tail.splitAt(prev)
+      val (left, right) = splittable(prev, tail)
       (HCons(head, left), right)
     }
 }

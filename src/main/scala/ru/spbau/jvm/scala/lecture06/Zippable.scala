@@ -28,6 +28,6 @@ object Zippable {
     (p: PrefixHead :: Prefix, l: ListHead :: List) => {
       val HCons(prefixHead, prefix) = p
       val HCons(listHead, list) = l
-      HCons((prefixHead, listHead), prefix zip list)
+      HCons((prefixHead, listHead), zippable(prefix, list))
     }
 }
