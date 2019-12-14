@@ -15,6 +15,13 @@ package object lecture06 {
     ](prefix: Prefix)
      (implicit appendable: Appendable[Prefix, List, Result]): Result =
       appendable(prefix, list)
+
+    def zip[
+      Right <: HList,
+      Result <: HList
+    ](right: Right)
+     (implicit zipHelper: ZipHelper[List, Right, Result]): Result =
+      zipHelper(list, right)
   }
 
 }
