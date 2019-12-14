@@ -71,7 +71,7 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
   }
 
   private def smallerBigger(that: TreapMultiSet[K]): (TreapMultiSet[K], TreapMultiSet[K]) = {
-    if (this.root.nodeSize < that.root.nodeSize)
+    if (this.root.size < that.root.size)
       (this, that)
     else
       (that, this)

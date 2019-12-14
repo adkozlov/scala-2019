@@ -2,11 +2,10 @@ package ru.spbau.jvm.scala.treap
 
 import ru.spbau.jvm.scala.lecture03.List
 
-class NodeContent[K](val key: K, val number: Int, val priority: Int)
+case class NodeContent[K] private (key: K, number: Int, priority: Int)
 
 object NodeContent {
-  def apply[K](key: K, number: Int, priority: Int): NodeContent[K] = new NodeContent[K](key, number, priority)
-  def apply[K](key: K, number: Int): NodeContent[K] = new NodeContent[K](key, number, random.nextInt())
+  def apply[K](key: K, number: Int, priority: Int = random.nextInt()): NodeContent[K] = new NodeContent[K](key, number, priority)
   private val random = scala.util.Random
 }
 
@@ -14,22 +13,17 @@ sealed trait Treap[K] {
   def base: NodeContent[K]
   def left: Treap[K]
   def right: Treap[K]
-  def nodeSize: Int
+  val size: Int
   def isEmpty: Boolean
-  def foreach(f: K => Unit): Unit
   def foreachOnce(f: (K, Int) => Unit): Unit
+  def foreach(f: K => Unit): Unit = foreachOnce {
+    case (key, number) => for (_ <- 1 to number) f(key)
+  }
 }
 
 case class TreapNode[K](base: NodeContent[K], left: Treap[K], right: Treap[K])(implicit ord:Ordering[K]) extends Treap[K] {
-  private val size = left.nodeSize + right.nodeSize + 1
-  override def nodeSize: Int = size
+  override val size: Int = left.size + right.size + 1
   override def isEmpty: Boolean = false
-
-  override def foreach(f: K => Unit): Unit = {
-    left.foreach(f)
-    for (_ <- 1 to base.number) f(base.key)
-    right.foreach(f)
-  }
 
   override def foreachOnce(f: (K, Int) => Unit): Unit = {
     left.foreachOnce(f)
@@ -42,14 +36,9 @@ case class EmptyNode[K]() extends Treap[K] {
   override def base = throw new NoSuchElementException
   override def left = throw new UnsupportedOperationException
   override def right = throw new UnsupportedOperationException
-  override def nodeSize: Int = 0
+  override val size: Int = 0
   override def isEmpty: Boolean = true
-  override def foreach(f: K => Unit): Unit = {}
   override def foreachOnce(f: (K, Int) => Unit): Unit = {}
-}
-
-object EmptyNode {
-  def apply[K](): EmptyNode[K] = new EmptyNode()
 }
 
 object TreapNode {
