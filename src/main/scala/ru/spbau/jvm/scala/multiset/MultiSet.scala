@@ -81,7 +81,19 @@ class MultiSet[K](elements: K*)(implicit ord: Ordering[K]) {
     result
   }
 
-  override def toString: String = tree.iterator().map(node => s"${node._1} -> ${node._2}").mkString("[", ", ", "]")
+  override def toString: String = {
+    var result: String = "["
+    val iter = tree.iterator()
+    while (iter.hasNext) {
+      val node = iter.next()
+      result += s"${node._1} -> ${node._2}"
+      if (iter.hasNext)
+        result += ", "
+    }
+    result += "]"
+    println(result)
+    result
+  }
 }
 
 private class AVLTreeMultiSet[K]()(implicit ord: Ordering[K]){
@@ -97,6 +109,30 @@ private class AVLTreeMultiSet[K]()(implicit ord: Ordering[K]){
     }
   }
 
+  class BSTIterator  {
+    private var curNode: AVLTreeNode = _
+    private var lastNode: (K, Int) = _
+
+    def hasNext: Boolean = {
+      if (lastNode == null) {
+        if (curNode == null)
+          curNode = findLeft(root)
+        return curNode != null
+      }
+      if (curNode != null) return true
+      curNode = findNext(root, lastNode._1)
+      curNode != null
+    }
+
+    def next(): (K, Int) = {
+      if (!hasNext)
+        throw new NoSuchElementException("Iterator came out of bounds")
+      lastNode = (curNode.key, curNode.value)
+      curNode = null
+      lastNode
+    }
+  }
+
   private def getHeight(node: AVLTreeNode): Int = {
     if (node == null) -1
     else node.height
@@ -104,9 +140,8 @@ private class AVLTreeMultiSet[K]()(implicit ord: Ordering[K]){
 
   var root: AVLTreeNode = _
 
-  def iterator(node: AVLTreeNode = root): Iterator[(K, Int)] = {
-    if (node == null) return Iterator()
-    iterator(node.left) ++ Iterator((node.key, node.value)) ++ iterator(node.right)
+  def iterator(node: AVLTreeNode = root): BSTIterator = {
+    new BSTIterator()
   }
 
   def foreach(fun: K => Unit, node: AVLTreeNode = root): Unit = {
@@ -202,6 +237,14 @@ private class AVLTreeMultiSet[K]()(implicit ord: Ordering[K]){
   private def findLeft(node: AVLTreeNode): AVLTreeNode = {
     if (node.left == null) node
     else findLeft(node.left)
+  }
+
+  private def findNext(node: AVLTreeNode, element: K): AVLTreeNode = {
+    if (node == null) return null
+    if (node.key <= element) return findNext(node.right, element)
+    val leftNext = findNext(node.left, element)
+    if (leftNext == null) node
+    else leftNext
   }
 
   private def balanceLeft(node: AVLTreeNode): AVLTreeNode = {

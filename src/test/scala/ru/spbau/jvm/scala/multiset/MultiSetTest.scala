@@ -99,6 +99,9 @@ class MultiSetTest extends FlatSpec with Matchers {
     it.hasNext should be (true)
     it.next should be (42)
     it.hasNext should be (false)
+    assertThrows[NoSuchElementException] {
+      it.next()
+    }
   }
 
   "flatMap" should "work correctly" in {
