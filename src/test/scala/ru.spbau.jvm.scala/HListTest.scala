@@ -59,6 +59,6 @@ class HListTest extends FunSuite {
   test("can not splitAt index out of bounds. Compilation error if uncomment.") {
     val five = Succ(Succ(Succ(Succ(Succ(Zero)))))
     val list = "hello" :: 1 :: 'a' :: 123 :: HNil
-    //    val (left, right) = list.splitAt(five)
+//    val (left, right) = list.splitAt(five)
   }
 }
