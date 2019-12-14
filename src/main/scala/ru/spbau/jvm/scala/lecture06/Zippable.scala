@@ -14,7 +14,7 @@ object Zippable {
 
   // Nil zip Nil = Nil
   implicit def nilZippable: Zippable[Nil, Nil, Nil] =
-    (_: Nil, nil: Nil) => nil
+    (_: Nil, _: Nil) => HNil
 
   // Prefix zip List = Result
   // (PrefixHead :: Prefix) zip (ListHead :: List) = (PrefixHead, ListHead) :: Result
@@ -28,6 +28,6 @@ object Zippable {
     (p: PrefixHead :: Prefix, l: ListHead :: List) => {
       val HCons(prefixHead, prefix) = p
       val HCons(listHead, list) = l
-      (prefixHead, listHead) :: zippable(prefix, list)
+      HCons((prefixHead, listHead), prefix zip list)
     }
 }
