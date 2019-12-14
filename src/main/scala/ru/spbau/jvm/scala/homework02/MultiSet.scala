@@ -8,12 +8,14 @@ class MultiSet[K](implicit val ord: Ordering[K]) {
 
   def remove(key: K): Unit = treap = treap.delete(key)
 
-  def foreach(f: K => Unit): Unit = treap.foreach(f)
+  def foreach(f: (K, Int) => Unit): Unit = treap.foreach(f)
+
+  override def toString: String = treap.toSting()
 
   def find(key: K): Option[(K, Int)]
   = treap.find(key) match {
-    case Nul => Option.empty
     case Node(k, v, p, l, r) => Option((k, v))
+    case _ => Option.empty
   }
 
   def |(that: MultiSet[K]): MultiSet[K] = {
@@ -30,9 +32,7 @@ class MultiSet[K](implicit val ord: Ordering[K]) {
 
   def count(key: K): Int = treap.count(key)
 
-  def size: Int = treap.size()
-
-  def print: Unit = treap.foreach(key => println(key + " " + treap.count(key).toString))
+  def size: Int = treap.size
 
   def contains(key: K): Boolean = treap.contains(key)
 }

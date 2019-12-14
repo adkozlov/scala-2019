@@ -15,6 +15,11 @@ class MultiSetTest extends FunSuite {
     assert(ms.count(4) == 0)
   }
 
+  test("toString multiset.") {
+    val ms = MultiSet(1, 1, 2, 1, 2, 3)
+    assert(ms.toString() == "[1, 3] [2, 2] [3, 1]")
+  }
+
   test("Find in multiset.") {
     val ms = MultiSet(1, 1, 2, 1, 2, 3)
     assert(ms.find(1).get == (1, 3))
