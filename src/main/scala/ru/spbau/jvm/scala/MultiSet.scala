@@ -34,11 +34,10 @@ class MultiSet[T](elements: T*)(implicit ord: Ordering[T]){
 
   def apply(key: T)
            (implicit ord: Ordering[T]): Int = {
-    val found = findNode(root, key)
-    if (found.isEmpty) {
-      return 0
+    findNode(root, key) match {
+      case Some(node) => node.count
+      case _ => 0
     }
-    found.get.count
   }
 
   def remove(key: T, delta: Int = 1)
@@ -84,7 +83,7 @@ class MultiSet[T](elements: T*)(implicit ord: Ordering[T]){
   def &(other: MultiSet[T])
        (implicit ord: Ordering[T]): MultiSet[T] = {
     val result = new MultiSet[T]
-    for(key <- this) {
+    for (key <- this) {
       val otherCount = other(key)
       if (otherCount > 0) {
         result.add(key, math.min(this(key), otherCount))
@@ -101,7 +100,7 @@ class MultiSet[T](elements: T*)(implicit ord: Ordering[T]){
   def toList(implicit ord: Ordering[T]): List[(T, Int)] = {
     val builder = List.newBuilder[(T, Int)]
     for (key <- this) {
-      builder.addOne((key, this(key)))
+        builder += ((key, this(key)))
     }
     builder.result()
   }
@@ -111,20 +110,10 @@ class MultiSet[T](elements: T*)(implicit ord: Ordering[T]){
     val result = new MultiSet[T]
     for (key <- this) {
       if (predicate(key)) {
-        result.add(key, this (key))
+        result.add(key, this(key))
       }
     }
     result
-  }
-
-  def withFilter(predicate: T => Boolean)
-                (implicit ord: Ordering[T]): MultiSet[T] = {
-    val tmp = filter(predicate)
-    clear()
-    for (key <- tmp) {
-      add(key, tmp(key))
-    }
-    this
   }
 
   def map[S](fun: T => S) (implicit ord: Ordering[T],
@@ -159,7 +148,8 @@ class MultiSet[T](elements: T*)(implicit ord: Ordering[T]){
     Option.empty
   }
 
-  private def foreach(node: Node, fun: T => Unit): Unit = {
+  private def foreach(node: Node, fun: T => Unit)
+                     (implicit ord: Ordering[T]): Unit = {
     if (node == null) {
       return
     }

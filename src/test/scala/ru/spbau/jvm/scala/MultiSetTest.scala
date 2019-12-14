@@ -1,6 +1,6 @@
 package ru.spbau.jvm.scala
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 class MultiSetTest extends org.scalatest.FlatSpec with Matchers {
 
@@ -173,13 +173,13 @@ class MultiSetTest extends org.scalatest.FlatSpec with Matchers {
 
   it should "work inside for-comprehension" in {
     val set = new MultiSet[Int]
-    for (i <- 1 to 9) {
+    for (i <- 1 to 4) {
       set.add(i)
     }
     var concat = ""
-    for (key <- set if key % 2 == 0) {
+    for (key <- set) {
       concat += key
     }
-    assert(concat === "2468")
+    assert(concat === "1234")
   }
 }
