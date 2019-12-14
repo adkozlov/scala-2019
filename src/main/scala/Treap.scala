@@ -46,14 +46,23 @@ class Treap[T <: Ordered[T]](
         filtered
     }
 
-    final def withFilter(p: T => Boolean): Treap[T] = {
-        val buffer: util.ArrayList[(T, Int)] = new util.ArrayList[(T, Int)]
-        foreach(key => if (p(key)) buffer.add((key, get(key))))
-        root = Option.empty[Node[T]]
-        for (i <- 0 until buffer.size()) {
-            val (key, value) = buffer.get(i)
-            put(key, value)
+    def recursiveWithFilter(v: Option[Node[T]], p: T => Boolean): Option[Node[T]] = {
+        if (v.isEmpty) {
+            return v
         }
+        val l = recursiveWithFilter(v.get.left, p)
+        val r = recursiveWithFilter(v.get.right, p)
+        if (p(v.get.key)) {
+            v.get.left = l
+            v.get.right = r
+            v
+        } else {
+            merge(l, r)
+        }
+    }
+
+    final def withFilter(p: T => Boolean): Treap[T] = {
+        root = recursiveWithFilter(root, p)
         this
     }
 
@@ -180,7 +189,7 @@ class Treap[T <: Ordered[T]](
     }
 
     /**
-      * Merges two given trees l and r taking into account
+      * Merges two given trees l and r
       * supposing that given trees are correct and all keys
       * in the left tree are less than all keys in the right tree
       * */
@@ -226,7 +235,7 @@ class Treap[T <: Ordered[T]](
     /**
       * Splits the tree v by delimiter x in such a way that
       * left part will contain all keys which are less than x
-      * and right part will contain all keys which are greater or equal to x
+      * and right part will contain all keys which are greater than or equal to x
       *
       * @param v is the tree to be splitted
       * @param x is the delimiter
