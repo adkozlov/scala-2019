@@ -65,7 +65,7 @@ object TreapNode {
       throw new IllegalArgumentException("empty list provided to a TreapNode")
     else {
       val base = minElement.get
-      new TreapNode[K](base, Treap(content.filter(p => ord.lt(p.key, base.key))), Treap(content.filter(p => ord.gt(p.key, base.key))))
+      new TreapNode[K](base, Treap(content.withFilter(p => ord.lt(p.key, base.key))), Treap(content.withFilter(p => ord.gt(p.key, base.key))))
     }
   }
 }

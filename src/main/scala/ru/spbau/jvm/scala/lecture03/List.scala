@@ -15,7 +15,7 @@ sealed trait List[+A] {
   // polymorphic implementation
   def foreach(function: A => Unit): Unit
 
-  def filter(function: A => Boolean): List[A]
+  def withFilter(function: A => Boolean): List[A]
 
   final def +:[B >: A](head: B): List[B] =
     ::(head)
@@ -47,8 +47,8 @@ final case class ::[+A](head: A, tail: List[A]) extends List[A] {
     tail.foreach(function)
   }
 
-  override def filter(function: A => Boolean): List[A] = {
-    val newTail = tail.filter(function)
+  override def withFilter(function: A => Boolean): List[A] = {
+    val newTail = tail.withFilter(function)
     if (function(head)) head :: newTail else newTail
   }
 }
@@ -69,5 +69,5 @@ case object Nil extends List[Nothing] {
 
   override def foreach(function: Nothing => Unit): Unit = {}
 
-  override def filter(function: Nothing => Boolean): List[Nothing] = Nil
+  override def withFilter(function: Nothing => Boolean): List[Nothing] = Nil
 }
