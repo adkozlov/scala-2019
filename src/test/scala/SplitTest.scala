@@ -1,12 +1,11 @@
-package hw03
+import hw03._
 
 import org.scalatest.Matchers
 
 class SplitTest extends org.scalatest.FlatSpec with Matchers {
 
-
     it should "correctly splits empty list" in {
-        HNil.split(Zero) should be ((HNil, HNil))
+        HNil.split(Zero) should be((HNil, HNil))
     }
 
     it should "correctly splits not empty list" in {
@@ -42,13 +41,13 @@ class SplitTest extends org.scalatest.FlatSpec with Matchers {
 
     it should "not compile if split index is too large" in {
         assertDoesNotCompile(
-        """
-          |val (lfound, rfound) = ("123" :: true :: 42 :: HNil).split(Positive(Positive(Positive(Positive(Zero)))))
-          |        val lexpected = "123" :: true :: 42 :: HNil
-          |        val rexpected = HNil
-          |        lfound should be(lexpected)
-          |        rfound should be(rexpected)
-        """.stripMargin
+            """
+              |val (lfound, rfound) = ("123" :: true :: 42 :: HNil).split(Positive(Positive(Positive(Positive(Zero)))))
+              |        val lexpected = "123" :: true :: 42 :: HNil
+              |        val rexpected = HNil
+              |        lfound should be(lexpected)
+              |        rfound should be(rexpected)
+            """.stripMargin
         )
     }
 }
