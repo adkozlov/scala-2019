@@ -1,7 +1,6 @@
-package ru.spbau.jvm.scala
+package ru.spbau.jvm.scala.lecture06
 
 import org.scalatest.FunSuite
-import ru.spbau.jvm.scala.lecture06.{HNil, Succ, Zero}
 
 
 class HListTest extends FunSuite {
@@ -53,6 +52,14 @@ class HListTest extends FunSuite {
     val list = "hello" :: 1 :: 'a' :: 123 :: HNil
     val (left, right) = list.splitAt(four)
     assert(left == list)
+    assert(right == HNil)
+  }
+
+  test("SplitAt empty list.") {
+    val zero = Zero
+    val list = HNil
+    val (left, right) = list.splitAt(zero)
+    assert(left == HNil)
     assert(right == HNil)
   }
 

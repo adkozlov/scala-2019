@@ -13,21 +13,22 @@ object Zippable {
   //Two lists with different size can not be zipped
 
   // Nil zip Nil = Nil
-  implicit def nilZippable: Zippable[Nil, Nil, Nil] =
-    (_: Nil, _: Nil) => HNil
+  implicit def nilZippable[List <: Nil, Suffix <: Nil]: Zippable[List, Suffix, Nil] =
+    (_: List, _: Suffix) => HNil
 
   // Prefix zip List = Result
   // (PrefixHead :: Prefix) zip (ListHead :: List) = (PrefixHead, ListHead) :: Result
   implicit def zippable[
-    PrefixHead,
-    Prefix <: HList,
     ListHead,
     List <: HList,
+    SuffixHead,
+    Suffix <: HList,
     Result <: HList
-  ](implicit zippable: Zippable[Prefix, List, Result]): Zippable[PrefixHead :: Prefix, ListHead :: List, (PrefixHead, ListHead) :: Result] =
-    (p: PrefixHead :: Prefix, l: ListHead :: List) => {
-      val HCons(prefixHead, prefix) = p
-      val HCons(listHead, list) = l
-      HCons((prefixHead, listHead), zippable(prefix, list))
+  ](implicit zippable: Zippable[List, Suffix, Result])
+  : Zippable[ListHead :: List, SuffixHead :: Suffix, (ListHead, SuffixHead) :: Result] =
+    (list: ListHead :: List, suffix: SuffixHead :: Suffix) => {
+      val HCons(listHead, listTail) = list
+      val HCons(suffixHead, suffixTail) = suffix
+      HCons((listHead, suffixHead), zippable(listTail, suffixTail))
     }
 }
