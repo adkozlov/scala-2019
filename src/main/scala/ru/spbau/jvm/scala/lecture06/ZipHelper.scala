@@ -14,7 +14,6 @@ object ZipHelper {
 
   implicit def leftNilZipper[Right <: HList]: ZipHelper[Nil, Right, Nil] = (_, _) => HNil
 
-  // TODO check if it will work with HList instead of HCons on zip(Nil, Nil)
   implicit def rightNilZipper[Left <: HCons[_, _]]: ZipHelper[Left, Nil, Nil] = (_, _) => HNil
 
   implicit def zipper[
