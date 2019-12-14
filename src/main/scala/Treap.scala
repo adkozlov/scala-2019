@@ -1,5 +1,3 @@
-import java.util
-
 import scala.util.Random
 
 class Node[T <: Ordered[T]] (
