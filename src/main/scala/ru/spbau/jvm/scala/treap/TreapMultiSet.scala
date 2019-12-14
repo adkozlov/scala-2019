@@ -1,25 +1,16 @@
 package ru.spbau.jvm.scala.treap
 
-import scala.collection.mutable
+import java.lang.StringBuilder
 
 class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
   import Treap._
 
   def this(keys: K*)(implicit ord: Ordering[K]) = this({
-    var contents: Seq[NodeContent[K]] = Seq.empty
-    var last: Option[K] = Option.empty
-    var lastCount = 0
-    for (k <- keys.sorted(ord).reverse) {
-      if (last.contains(k))
-        lastCount += 1
-      else {
-        last.foreach(lastKey => contents = NodeContent(lastKey, lastCount) +: contents)
-        last = Option(k)
-        lastCount = 1
-      }
+    var root: Treap[K] = EmptyNode()
+    for (k <- keys) {
+      root = Treap.addInsert(root, k, 1)(ord)
     }
-    last.foreach(lastKey => contents = NodeContent(lastKey, lastCount) +: contents)
-    Treap(contents)(ord)
+    root
   })
 
   def count(key: K): Int = {
@@ -70,9 +61,13 @@ class TreapMultiSet[K] private (val root: Treap[K])(implicit ord: Ordering[K]) {
   }
 
   override def toString: String = {
-    var pairs: Seq[String] = Seq.empty
-    root.foreachOnce((element, count) => pairs = pairs :+ s"$element -> $count")
-    pairs.mkString("[", ", ", "]")
+    val resultBuilder = new StringBuilder
+    val separator = ", "
+    resultBuilder.append("[")
+    root.foreachOnce((element, count) => resultBuilder.append(s"$element -> $count").append(separator))
+    resultBuilder.setLength(resultBuilder.length() - separator.length)
+    resultBuilder.append("]")
+    resultBuilder.toString
   }
 
   private def smallerBigger(that: TreapMultiSet[K]): (TreapMultiSet[K], TreapMultiSet[K]) = {

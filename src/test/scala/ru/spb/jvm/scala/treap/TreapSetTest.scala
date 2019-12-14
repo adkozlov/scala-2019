@@ -86,7 +86,7 @@ class TreapSetTest extends FunSuite with BeforeAndAfterEach {
     )
   }
 
-  test("toStringTest") {
+  test("toString test") {
     assert("[1 -> 2, 3 -> 1]" == TreapMultiSet(3, 1, 1).toString())
   }
 }
