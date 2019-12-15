@@ -111,17 +111,15 @@ class MultiSet[T]()(implicit ord: T => Ordered[T]) {
 
     def toList: List[(E, Int)] = {
       if (this.left != null && this.right != null) {
-        this.left.toList ++ List((this.key, this.total)) ++ this.right.toList
+        this.left.toList ::: ((this.key, this.total) :: this.right.toList)
       } else if (this.left != null) {
-        this.left.toList ++ List((this.key, this.total))
+        this.left.toList ::: ((this.key, this.total) :: Nil)
       } else if (this.right != null) {
-        List((this.key, this.total)) ++ this.right.toList
+        (this.key, this.total):: this.right.toList
       } else {
-        List((this.key, this.total))
+        (this.key, this.total) :: Nil
       }
     }
-
-    def iterator(): Iterator[(E, Int)] = toList.iterator
   }
 
   def add(e: T)(implicit ord: T => Ordered[T]): MultiSet[T] = {
@@ -145,7 +143,7 @@ class MultiSet[T]()(implicit ord: T => Ordered[T]) {
   def remove(o: T): MultiSet[T] = {
     if (myHead != null && contains(o)) {
       myHead = myHead.remove(o)
-      mySize -= 1;
+      mySize -= 1
     }
     this
   }
@@ -156,20 +154,16 @@ class MultiSet[T]()(implicit ord: T => Ordered[T]) {
 
   def withFilter(predicate: T => Boolean): MultiSet[T] = filter(predicate)
 
-  def foreach[U](function: T => U): Unit = toList.foreach(function)
-
-  def flatMap[U](f: T => IterableOnce[U])(implicit ord: Ordering[U]): MultiSet[U] = {
-    MultiSet(toList.flatMap(f))
-  }
+  def foreach(function: T => Unit): Unit = toList.foreach(function)
 
   //Sum by whole sum, not minimum
   def |(other: MultiSet[T]): MultiSet[T] = {
-    MultiSet(toList ++ other.toList)
+    MultiSet(toList ::: other.toList)
   }
 
   //Intersection by keys
   def &(other: MultiSet[T]): MultiSet[T] = {
-    MultiSet(toList.filter(x => other.toList.contains(x)) ++ other.toList.filter(x => toList.contains(x)))
+    MultiSet(toList.filter(x => other.toList.contains(x)) ::: other.toList.filter(x => toList.contains(x)))
   }
 
   def apply(key: T): Int = if (myHead != null) {
@@ -190,20 +184,20 @@ class MultiSet[T]()(implicit ord: T => Ordered[T]) {
   }
 
   private def toList: List[T] = if (myHead != null) {
-    myHead.toList.flatMap(value => List.range(1, value._2 + 1).map(_ => value._1))
+    var result: List[T] = Nil
+    myHead.toList.foreach(value => for (_ <- 1 to value._2) {
+      result = result ::: (value._1 :: Nil)
+    })
+    result
   } else {
-    List.empty
+    Nil
   }
-
-  def iterator(): Iterator[T] = toList.iterator
 
   def size(): Int = mySize
 }
 
 object MultiSet {
   def apply[U]()(implicit ord: U => Ordered[U]) = new MultiSet[U]()
-
-  def apply[U](values: U*)(implicit ord: U => Ordered[U]): MultiSet[U] = MultiSet[U](values.toList)
 
   def apply[U](values: List[U])(implicit ord: U => Ordered[U]): MultiSet[U] = {
     val result = new MultiSet[U]

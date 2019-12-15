@@ -3,12 +3,13 @@ package ru.spbau.jvm.scala.avl
 import org.scalatest.{FlatSpec, Matchers}
 
 class MultiSetTest extends FlatSpec with Matchers {
-  private def testSet1() = MultiSet[Int](1, 2, 3, 4, 5, 5, 9, 9)
-  private def testSet2() = MultiSet[Int](4, 5, 6, 6, 9)
+  private def testSet1() = MultiSet[Int](1 :: 2 :: 3 :: 4 :: 5 :: 5 :: 9 :: 9 :: Nil)
+
+  private def testSet2() = MultiSet[Int](4 :: 5 :: 6 :: 6 :: 9 :: Nil)
 
   "Constructor" should "be correct" in {
     testSet1().toString should be("[1 -> 1, 2 -> 1, 3 -> 1, 4 -> 1, 5 -> 2, 9 -> 2]")
-    MultiSet[Int](List.empty).toString should be("[]")
+    MultiSet[Int](Nil).toString should be("[]")
   }
 
   "add" should "be correct" in {
