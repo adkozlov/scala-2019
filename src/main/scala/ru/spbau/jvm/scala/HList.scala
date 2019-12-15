@@ -1,5 +1,4 @@
 package ru.spbau.jvm.scala
-package lecture06
 
 sealed trait HList
 
