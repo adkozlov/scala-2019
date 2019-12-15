@@ -20,7 +20,7 @@ final class MultiSet[T](val tree: AvlTree[T])
     for (elem <- other) {
       if (contains(elem)) {
         if (tree.contains(elem))
-          tree = tree.add(elem, 1)
+          tree = tree.add(elem)
         else
           tree = tree.add(elem, 1 + this.tree(elem))
       }

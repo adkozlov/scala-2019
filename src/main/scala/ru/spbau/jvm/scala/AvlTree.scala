@@ -1,35 +1,34 @@
 package ru.spbau.jvm.scala
 
-import ru.spbau.jvm.scala.AvlBalance.AvlBalanceType
+sealed trait AvlBalance
 
-object AvlRotation extends Enumeration {
-  type AvlRotationType = Value
+case object AvlBalanced extends AvlBalance
 
-  val AvlRotSmallLeft, AvlRotSmallRight, AvlRotBigLeft, AvlRotBigRight, AvlRotNone = Value
+case object AvlLeftBalanced extends AvlBalance
+
+case object AvlLeftUnbalanced extends AvlBalance
+
+case object AvlRightBalanced extends AvlBalance
+
+case object AvlRightUnbalanced extends AvlBalance
+
+object isBalanced {
+  def unapply(balance: AvlBalance): Boolean = balance match {
+    case AvlBalanced | AvlLeftBalanced | AvlRightBalanced => true
+    case _ => false
+  }
 }
 
-object AvlBalance extends Enumeration {
-  type AvlBalanceType = Value
-  val AvlBalanced, AvlRightBalanced, AvlLeftBalanced, AvlRightUnbalanced, AvlLeftUnbalanced = Value
-
-  def isBalanced(balance: AvlBalanceType): Boolean = balance match {
-    case AvlBalanced => true
-    case AvlLeftBalanced => true
-    case AvlRightBalanced => true
+object isLeftOrBalanced {
+  def unapply(balance: AvlBalance): Boolean = balance match {
+    case AvlBalanced | AvlLeftBalanced | AvlLeftUnbalanced => true
     case _ => false
   }
+}
 
-  def isLeftOrBalanced(balance: AvlBalanceType): Boolean = balance match {
-    case AvlBalanced => true
-    case AvlLeftBalanced => true
-    case AvlLeftUnbalanced => true
-    case _ => false
-  }
-
-  def isRightOrBalanced(balance: AvlBalanceType): Boolean = balance match {
-    case AvlBalanced => true
-    case AvlRightBalanced => true
-    case AvlRightUnbalanced => true
+object isRightOrBalanced {
+  def unapply(balance: AvlBalance): Boolean = balance match {
+    case AvlBalanced | AvlRightBalanced | AvlRightUnbalanced => true
     case _ => false
   }
 }
@@ -45,9 +44,7 @@ sealed trait AvlTree[T] {
 
   def apply(elem: T): Int
 
-  def add(data: T): AvlTree[T]
-
-  def add(data: T, count: Int): AvlTree[T]
+  def add(data: T, count: Int = 1): AvlTree[T]
 
   def remove(data: T): AvlTree[T]
 
@@ -55,7 +52,7 @@ sealed trait AvlTree[T] {
 
   def rebalance(): AvlTree[T]
 
-  def balance: AvlBalanceType
+  def balance: AvlBalance
 
   def min: Option[(T, Int)]
 
@@ -81,9 +78,7 @@ final case class AvlNode[T](depth: Int,
     }
   }
 
-  override def add(value: T): AvlTree[T] = add(value, 1)
-
-  override def add(value: T, addCount: Int): AvlTree[T] =
+  override def add(value: T, addCount: Int = 1): AvlTree[T] =
     if (ordering.equiv(value, data)) {
       updateTree(addCount)
     } else if (ordering.lt(value, data)) {
@@ -94,12 +89,12 @@ final case class AvlNode[T](depth: Int,
 
   override def rebalance(): AvlTree[T] = {
     balance match {
-      case factor if AvlBalance.isBalanced(factor) => this
+      case isBalanced() => this
       //  Left rotation
-      case AvlBalance.AvlRightUnbalanced =>
+      case AvlRightUnbalanced =>
         right.balance match {
           // Small left rotation
-          case factor if AvlBalance.isRightOrBalanced(factor) => rotateLeft()
+          case isRightOrBalanced() => rotateLeft()
           // Big left rotation
           case _ =>
             val rightNode = right.asInstanceOf[AvlNode[T]]
@@ -107,10 +102,10 @@ final case class AvlNode[T](depth: Int,
             makeTree(data, count, left, newRight).rotateLeft()
         }
       // Right rotation
-      case AvlBalance.AvlLeftUnbalanced =>
+      case AvlLeftUnbalanced =>
         left.balance match {
           // Small right rotation
-          case factor if AvlBalance.isLeftOrBalanced(factor) => rotateRight()
+          case isLeftOrBalanced() => rotateRight()
           // Big right rotation
           case _ =>
             val leftNode = left.asInstanceOf[AvlNode[T]]
@@ -120,36 +115,31 @@ final case class AvlNode[T](depth: Int,
     }
   }
 
-  override def balance: AvlBalanceType = right.depth - left.depth match {
-    case 0 => AvlBalance.AvlBalanced
-    case -1 => AvlBalance.AvlLeftBalanced
-    case -2 => AvlBalance.AvlLeftUnbalanced
-    case 1 => AvlBalance.AvlRightBalanced
-    case 2 => AvlBalance.AvlRightUnbalanced
+  override def balance: AvlBalance = right.depth - left.depth match {
+    case 0 => AvlBalanced
+    case -1 => AvlLeftBalanced
+    case -2 => AvlLeftUnbalanced
+    case 1 => AvlRightBalanced
+    case 2 => AvlRightUnbalanced
     case factor => throw new IllegalStateException(s"Broken AVL invariant! Factor: $factor")
   }
 
-  private def rotateLeft(): AvlTree[T] = {
-    if (!right.isInstanceOf[AvlNode[T]]) {
-      this
-    } else {
-      val rightNode = right.asInstanceOf[AvlNode[T]]
-      val newLeftNode = makeTree(data, count, left, rightNode.left)
-      makeTree(rightNode.data, rightNode.count, newLeftNode, rightNode.right)
-    }
+  private def rotateLeft(): AvlTree[T] = right match {
+    case AvlNil() => this
+    case node: AvlNode[T] =>
+      val newLeftNode = makeTree(data, count, left, node.left)
+      makeTree(node.data, node.count, newLeftNode, node.right)
+
   }
 
   private def makeTree[U](data: U, count: Int, left: AvlTree[U], right: AvlTree[U])(implicit o: Ordering[U]): AvlNode[U]
   = AvlNode(1 + math.max(left.depth, right.depth), count, data, left, right)
 
-  private def rotateRight(): AvlTree[T] = {
-    if (!left.isInstanceOf[AvlNode[T]]) {
-      this
-    } else {
-      val leftNode = left.asInstanceOf[AvlNode[T]]
-      val newRightNode = makeTree(data, count, leftNode.left, right)
-      makeTree(leftNode.data, leftNode.count, leftNode.left, newRightNode)
-    }
+  private def rotateRight(): AvlTree[T] = left match {
+    case AvlNil() => this
+    case node: AvlNode[T] =>
+      val newRightNode = makeTree(data, count, node.left, right)
+      makeTree(node.data, node.count, node.left, newRightNode)
   }
 
   private def updateTree(diff: Int): AvlNode[T]
@@ -175,9 +165,15 @@ final case class AvlNode[T](depth: Int,
       makeTree(data, count, left.remove(value), right)
     }
 
-  override def min: Option[(T, Int)] = if (left.isInstanceOf[AvlNil[T]]) Some(data, count) else left.min
+  override def min: Option[(T, Int)] = left match {
+    case AvlNil() => Some(data, count)
+    case _ => left.min
+  }
 
-  override def max: Option[(T, Int)] = if (right.isInstanceOf[AvlNil[T]]) Some(data, count) else right.max
+  override def max: Option[(T, Int)] = right match {
+    case AvlNil() => Some(data, count)
+    case _ => right.max
+  }
 
   override def contains(elem: T): Boolean = {
     if (ordering.equiv(elem, data)) {
@@ -213,21 +209,27 @@ final case class AvlNode[T](depth: Int,
     right.foreach(f)
   }
 
-  private def removeMostRight(): AvlTree[T] = if (right.isInstanceOf[AvlNil[T]]) {
-    left
-  } else {
-    makeTree(data, count, left, right.asInstanceOf[AvlNode[T]].removeMostRight()).rebalance()
+  private def removeMostRight(): AvlTree[T] = right match {
+    case AvlNil() => left
+    case right: AvlNode[T] => makeTree(data, count, left, right.removeMostRight()).rebalance()
+
   }
+
+  /*
+if (right.isInstanceOf[AvlNil[T]]) {
+  left
+} else {
+  makeTree(data, count, left, right.asInstanceOf[AvlNode[T]].removeMostRight()).rebalance()
+}
+   */
 }
 
-final case class AvlNil[T]()(implicit val ordering: Ordering[T]) extends AvlTree[T] {
+final case class AvlNil[T]()(implicit ord: Ordering[T]) extends AvlTree[T] {
   override def apply(elem: T): Int = 0
 
-  override def add(data: T): AvlTree[T] = AvlNode(1, 1, data, AvlNil(), AvlNil())
+  override def remove(data: T): AvlTree[T] = throw new UnsupportedOperationException
 
   override def add(data: T, count: Int): AvlTree[T] = AvlNode(1, count, data, AvlNil(), AvlNil())
-
-  override def remove(data: T): AvlTree[T] = throw new UnsupportedOperationException
 
   override def rebalance(): AvlTree[T] = AvlNil()
 
@@ -235,7 +237,7 @@ final case class AvlNil[T]()(implicit val ordering: Ordering[T]) extends AvlTree
 
   override def count: Int = 0
 
-  override def balance: AvlBalanceType = AvlBalance.AvlBalanced
+  override def balance: AvlBalance = AvlBalanced
 
   override def min: Option[(T, Int)] = None
 

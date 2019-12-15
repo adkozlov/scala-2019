@@ -21,7 +21,11 @@ class AvlTreeTest extends FunSuite {
     assert(tree == treeResult)
     assert(tree.max.contains((5, 1)))
     assert(tree.min.contains((1, 1)))
-    assert(AvlBalance.isBalanced(tree.balance))
+    tree.balance match {
+      case isBalanced() =>
+      case _ => fail()
+    }
+
     for (elem <- 1 until 5) {
       assert(tree.contains(elem))
     }
@@ -30,7 +34,10 @@ class AvlTreeTest extends FunSuite {
   test("remove test") {
     val treeEmpty = AvlNil[Int]()
     val tree = treeEmpty.add(1).add(2).add(3).add(4).add(5).remove(2)
-    assert(AvlBalance.isBalanced(tree.balance))
+    tree.balance match {
+      case isBalanced() =>
+      case _ => fail()
+    }
 
     val treeResult = AvlNode(3, 1, 4,
       AvlNode(2, 1, 1, AvlNil[Int](), AvlNode(1, 1, 3, AvlNil[Int](), AvlNil[Int]())),
