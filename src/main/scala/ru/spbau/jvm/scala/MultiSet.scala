@@ -1,20 +1,18 @@
 package ru.spbau.jvm.scala
 
-import java.util.Random
+import scala.util.Random
 
-class MultiSet[T](implicit ordering: Ordering[T]) {
+class MultiSet[T](elements: T*)(implicit ordering: Ordering[T]) {
 
-  def this(elements: T*)(implicit ordering: Ordering[T]) = {
-    this()
-    elements.foreach(x => add(x))
-  }
+  private var root: OptionalNode = Nil
+
+  private var size = 0
+
+  elements.foreach(add(_))
 
   def contains(k: T): Boolean = find(root, k) != Nil
 
-  def count(k: T): Int = find(root, k) match {
-    case Nil => 0
-    case Node(_, _, _, _, count) => count
-  }
+  def count(k: T): Int = find(root, k).count()
 
   def apply(k: T): Int = count(k)
 
@@ -22,9 +20,9 @@ class MultiSet[T](implicit ordering: Ordering[T]) {
     size += 1
     val found = find(root, k)
     found match {
-      case Nil => root = insert(root, new Node(k, count))
+      case Nil => root = insert(root, Node(x = k, count = count))
       case Node(_, _, x, _, currentCount) =>
-        root = insert(delete(root, x), new Node(k, currentCount + count))
+        root = insert(delete(root, x), Node(x = k, count = currentCount + count))
     }
   }
 
@@ -33,7 +31,7 @@ class MultiSet[T](implicit ordering: Ordering[T]) {
     found match {
       case Node(_, _, x, _, count) if count > 1 =>
         size -= 1
-        root = insert(delete(root, x), new Node(k, count - 1))
+        root = insert(delete(root, x), Node(x = k, count = count - 1))
       case Node(_, _, x, _, _) =>
         size -= 1
         root = delete(root, x)
@@ -95,22 +93,25 @@ class MultiSet[T](implicit ordering: Ordering[T]) {
     newMultiSet
   }
 
-  override def toString: String = root.childrenRepresentation()
+  override def toString: String = s"[${root.childrenRepresentation()}]"
 
   override def equals(obj: Any): Boolean = {
     obj match {
-      case _: MultiSet[T] => toString == obj.toString
+      case other: MultiSet[T] =>
+        if (size != other.size) {
+          return false
+        }
+        for (x <- this) {
+          if (other(x) != apply(x)) {
+            return false
+          }
+        }
+        true
       case _ => false
     }
   }
 
   def getSize: Int = size
-
-  private val random = new Random()
-
-  private var root: OptionalNode = Nil
-
-  private var size = 0
 
   private def split(node: OptionalNode, k: T): (OptionalNode, OptionalNode) = node match {
     case Nil => (Nil, Nil)
@@ -163,27 +164,28 @@ class MultiSet[T](implicit ordering: Ordering[T]) {
     }
   }
 
-  private abstract class OptionalNode {
+  private sealed abstract class OptionalNode {
     def foreach(f: T => Unit): Unit
 
     def childrenRepresentation(): String
+
+    def count(): Int
   }
 
   private case object Nil extends OptionalNode {
     override def foreach(f: T => Unit): Unit = {}
 
-    override def childrenRepresentation(): String = "[]"
+    override def childrenRepresentation(): String = ""
+
+    override def count(): Int = 0
   }
 
-  private case class Node(left: OptionalNode,
-                          right: OptionalNode,
-                          x: T,
-                          y: Int,
-                          count: Int
-                         ) extends OptionalNode {
-    def this(x: T, count: Int) = {
-      this(Nil, Nil, x, random.nextInt(), count)
-    }
+  private final case class Node(left: OptionalNode = Nil,
+                                right: OptionalNode = Nil,
+                                x: T,
+                                y: Int = Random.nextInt(),
+                                count: Int
+                               ) extends OptionalNode {
 
     override def foreach(f: T => Unit): Unit = {
       left.foreach(f)
@@ -194,11 +196,11 @@ class MultiSet[T](implicit ordering: Ordering[T]) {
     }
 
     override def childrenRepresentation(): String = {
-      var leftSide = left.childrenRepresentation().dropRight(1)
+      var leftSide = left.childrenRepresentation()
       if (leftSide.length > 1) {
         leftSide += ", "
       }
-      var rightSide = right.childrenRepresentation().drop(1)
+      var rightSide = right.childrenRepresentation()
       if (rightSide.length > 1) {
         rightSide = s", $rightSide"
       }
