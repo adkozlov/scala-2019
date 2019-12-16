@@ -15,6 +15,16 @@ package object lecture06 {
     ](prefix: Prefix)
      (implicit appendable: Appendable[Prefix, List, Result]): Result =
       appendable(prefix, list)
+
+    def zip[
+      Other <: HList,
+      Result <: HList
+    ](other: Other)(implicit zipppable: Zippable[List, Other, Result]): Result = zipppable(list, other)
+
+    def splitAt[
+      Index <: Nonnegative,
+      Result <: (HList, HList)
+    ](index: Index)(implicit splittable: Splittable[Index, List, Result]): Result = splittable(index, list)
   }
 
 }
