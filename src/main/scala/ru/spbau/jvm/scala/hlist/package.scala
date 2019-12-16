@@ -30,4 +30,5 @@ package object hlist {
      (implicit splittable: Splittable[Index, List, Result]): Result =
       splittable(index, list)
   }
+
 }
