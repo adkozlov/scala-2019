@@ -8,6 +8,11 @@ trait Zippable[
 }
 
 object Zippable {
+
+  // Nil zip Nil = Nil
+  implicit def nilZippable: Zippable[Nil, Nil, Nil] =
+    (_: Nil, _: Nil) => HNil
+
   // Nil zip List = Nil
   implicit def nilLeftZippable[
     List <: HList
