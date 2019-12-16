@@ -12,6 +12,4 @@ trait Tree[K, V >: Null] {
   def size(): Int
 
   def toList: List[(K, V)]
-
-  def iterator(): Iterator[(K, V)]
 }

@@ -105,12 +105,10 @@ class Treap[K, V >: Null](implicit ord: K => Ordered[K]) extends Tree[K, V] {
     }
 
     def toList: List[(K, V)] = {
-      val leftList = if(this.left != null) this.left.toList else List.empty
-      val rightList = if(this.right != null) this.right.toList else List.empty
-      leftList ++ List((this.key, this.value)) ++ rightList
+      val leftList = if (this.left != null) this.left.toList else Nil
+      val rightList = if (this.right != null) this.right.toList else Nil
+      leftList ::: (this.key, this.value) :: rightList
     }
-
-    def iterator(): Iterator[(K, V)] = toList.iterator
   }
 
   private var head: Node = null
@@ -158,16 +156,11 @@ class Treap[K, V >: Null](implicit ord: K => Ordered[K]) extends Tree[K, V] {
 
   override def size(): Int = treapSize
 
-  override def toList: List[(K, V)] = if (head == null) {
-    List.empty
-  } else {
-    head.toList
-  }
-
-  override def iterator(): Iterator[(K, V)] = if (head != null) {
-    head.iterator()
-  } else {
-    Iterator.empty
-  }
+  override def toList: List[(K, V)] =
+    if (head == null) {
+      Nil
+    } else {
+      head.toList
+    }
 }
 

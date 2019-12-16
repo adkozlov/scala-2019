@@ -54,6 +54,6 @@ class TreapTest extends FlatSpec with Matchers {
 
   "Treap toList" should "be correct" in {
     val treap = constructTreap()
-    treap.toList should be(List((11, 1), (21, 2), (31, 3), (41, 4)))
+    treap.toList should be((11, 1) :: (21, 2) :: (31, 3) :: (41, 4) :: Nil)
   }
 }
