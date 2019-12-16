@@ -199,6 +199,14 @@ class MultiSet[T]()(implicit ord: T => Ordered[T]) {
 object MultiSet {
   def apply[U]()(implicit ord: U => Ordered[U]) = new MultiSet[U]()
 
+  def apply[U](values: U*)(implicit ord: U => Ordered[U]): MultiSet[U] = {
+    var result: List[U] = Nil
+    for (value <- values) {
+      result = value :: result
+    }
+    MultiSet(result)
+  }
+
   def apply[U](values: List[U])(implicit ord: U => Ordered[U]): MultiSet[U] = {
     val result = new MultiSet[U]
     values.foreach(result.add)

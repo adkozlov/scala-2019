@@ -9,6 +9,7 @@ class MultiSetTest extends FlatSpec with Matchers {
 
   "Constructor" should "be correct" in {
     testSet1().toString should be("[1 -> 1, 2 -> 1, 3 -> 1, 4 -> 1, 5 -> 2, 9 -> 2]")
+    MultiSet[Int](1, 2, 3, 4, 5, 5, 9, 9).toString should be("[1 -> 1, 2 -> 1, 3 -> 1, 4 -> 1, 5 -> 2, 9 -> 2]")
     MultiSet[Int](Nil).toString should be("[]")
   }
 
