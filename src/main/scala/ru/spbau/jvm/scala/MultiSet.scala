@@ -88,12 +88,15 @@ private object Tree {
   def remove[T: Ordering, V](tree: Tree[T, V], k: T): Tree[T, V] =
     updateIfExist[T, V](tree, k, node => merge(node.left, node.right))
 
-  def iterator[T, V](tree: Tree[T, V]): Iterator[(T, V)] = for {
-    t <- tree match {
-      case Leaf => Iterator()
-      case Node(key, _, value, left, right) => iterator(left) ++ Iterator((key, value)) ++ iterator(right)
+  def foreach[T: Ordering, V, U](tree: Tree[T, V], f: (T, V) => U): Unit =
+    tree match {
+      case Leaf =>
+      case Node(key, _, value, left, right) =>
+        foreach(left, f)
+        f(key, value)
+        foreach(right, f)
     }
-  } yield t
+
 }
 
 case class MultiSet[T: Ordering](elements: T*) {
@@ -136,46 +139,41 @@ case class MultiSet[T: Ordering](elements: T*) {
     }
   }
 
-  def iterator(): Iterator[T] = new Iterator[T] {
-    private val iter: Iterator[(T, Int)] = Tree.iterator(_tree)
-    private var curr: (T, Int) = _
-
-    override def hasNext: Boolean = iter.hasNext || (curr != null && curr._2 > 0)
-
-    override def next(): T = {
-      if (curr == null || curr._2 == 0) {
-        curr = iter.next()
-      }
-
-      curr = (curr._1, curr._2 - 1)
-      curr._1
+  override def toString: String = {
+    var string = "["
+    Tree.foreach(_tree, { (key: T, count: Int) => string += s"$key -> $count, " })
+    string.length match {
+      case 1 =>
+      case _ => string = string.dropRight(2)
     }
+    string + "]"
   }
-
-  override def toString: String =
-    Tree.iterator(_tree).map(it => s"${it._1} -> ${it._2}").mkString("[", ", ", "]")
 
   def |(other: MultiSet[T]): MultiSet[T] = {
     var resultTree: Tree[T, Int] = Leaf
     var resultSize: Int = 0
 
-    (Tree.iterator(this._tree) ++ Tree.iterator(other._tree)).foreach {
-      case (key, _) => Tree.find(resultTree, key) match {
-        case Node(_, _, _, _, _) =>
-        case Leaf => (Tree.find(this._tree, key), Tree.find(other._tree, key)) match {
-          case (Node(_, _, value, _, _), Leaf) =>
-            resultSize = resultSize + value
-            resultTree = Tree.insert(resultTree, key, _rand.nextInt(), value)
-          case (Leaf, Node(_, _, value, _, _)) =>
-            resultSize = resultSize + value
-            resultTree = Tree.insert(resultTree, key, _rand.nextInt(), value)
-          case (Node(_, _, value1, _, _), Node(_, _, value2, _, _)) =>
-            resultSize = resultSize + max(value1, value2)
-            resultTree = Tree.insert(resultTree, key, _rand.nextInt(), max(value1, value2))
-          case (Leaf, Leaf) =>
+    val functor: (T, Int) => Unit = {
+      (key: T, _: Int) =>
+        Tree.find(resultTree, key) match {
+          case Node(_, _, _, _, _) =>
+          case Leaf => (Tree.find(this._tree, key), Tree.find(other._tree, key)) match {
+            case (Node(_, _, value, _, _), Leaf) =>
+              resultSize = resultSize + value
+              resultTree = Tree.insert(resultTree, key, _rand.nextInt(), value)
+            case (Leaf, Node(_, _, value, _, _)) =>
+              resultSize = resultSize + value
+              resultTree = Tree.insert(resultTree, key, _rand.nextInt(), value)
+            case (Node(_, _, value1, _, _), Node(_, _, value2, _, _)) =>
+              resultSize = resultSize + max(value1, value2)
+              resultTree = Tree.insert(resultTree, key, _rand.nextInt(), max(value1, value2))
+            case (Leaf, Leaf) =>
+          }
         }
-      }
     }
+
+    Tree.foreach(this._tree, functor)
+    Tree.foreach(other._tree, functor)
 
     val result = MultiSet[T]()
     result._tree = resultTree
@@ -187,17 +185,18 @@ case class MultiSet[T: Ordering](elements: T*) {
     var resultTree: Tree[T, Int] = Leaf
     var resultSize: Int = 0
 
-    Tree.iterator(this._tree).foreach {
-      case (key, _) => Tree.find(resultTree, key) match {
-        case Node(_, _, _, _, _) =>
-        case Leaf => (Tree.find(this._tree, key), Tree.find(other._tree, key)) match {
-          case (Node(_, _, value1, _, _), Node(_, _, value2, _, _)) =>
-            resultSize = resultSize + min(value1, value2)
-            resultTree = Tree.insert(resultTree, key, _rand.nextInt(), min(value1, value2))
-          case _ =>
+    Tree.foreach(this._tree, {
+      (key: T, _: Int) =>
+        Tree.find(resultTree, key) match {
+          case Node(_, _, _, _, _) =>
+          case Leaf => (Tree.find(this._tree, key), Tree.find(other._tree, key)) match {
+            case (Node(_, _, value1, _, _), Node(_, _, value2, _, _)) =>
+              resultSize = resultSize + min(value1, value2)
+              resultTree = Tree.insert(resultTree, key, _rand.nextInt(), min(value1, value2))
+            case _ =>
+          }
         }
-      }
-    }
+    })
 
     val result = MultiSet[T]()
     result._tree = resultTree
@@ -206,7 +205,12 @@ case class MultiSet[T: Ordering](elements: T*) {
   }
 
   def foreach[U](f: T => U): Unit =
-    iterator().foreach(f)
+    Tree.foreach(_tree, {
+      (value: T, count: Int) =>
+        for (_ <- 1 to count) {
+          f(value)
+        }
+    })
 
   def map[U: Ordering](f: T => U): MultiSet[U] = {
     val result = MultiSet[U]()
@@ -214,3 +218,5 @@ case class MultiSet[T: Ordering](elements: T*) {
     result
   }
 }
+
+
