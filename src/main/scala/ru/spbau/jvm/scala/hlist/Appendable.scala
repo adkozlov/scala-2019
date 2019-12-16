@@ -1,5 +1,4 @@
-package ru.spbau.jvm.scala
-package lecture06
+package ru.spbau.jvm.scala.hlist
 
 trait Appendable[
   Prefix <: HList,
