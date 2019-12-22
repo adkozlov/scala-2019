@@ -66,30 +66,28 @@ class MultiSet(private val init: Int*) {
 
   /** Returns how many times the value occurs in the multiset */
   def getCount(value: Int): Int = {
-    val node = get(value)
-    if (node.isEmpty) 0 else node.get.count
+    get(value) match {
+      case Some(node) => node.count
+      case _ => 0
+    }
   }
 
   /** Adds one occurrence of the value to the multiset */
   def add(value: Int): Unit = {
-    val getValue = get(value)
-    if (getValue.isEmpty) {
-      insert(value, 1)
-    } else {
-      getValue.get.count += 1
+    get(value) match {
+      case None => insert(value, 1)
+      case Some(node) => node.count += 1
     }
   }
 
   /** Removes one occurrence of the value from the multiset */
   def remove(value: Int): Unit = {
-    val getValue = get(value)
-    if (getValue.nonEmpty) {
-      if (getValue.get.count == 1) {
-        erase(value)
-      } else {
-        getValue.get.count -= 1
+    get(value).foreach(node => {
+      node.count match {
+        case 1 => erase(value)
+        case _ => node.count -= 1
       }
-    }
+    })
   }
 
   override def toString: String = {
@@ -158,12 +156,9 @@ class MultiSet(private val init: Int*) {
 
   private def merge(l: Option[Node], r: Option[Node]): Option[Node] = {
     if (l.isEmpty || r.isEmpty) {
-      if (l.isEmpty) {
-        return r
-      } else {
-        return l
-      }
+      return if (l.isEmpty) r else l
     }
+
     if (l.get.y < r.get.y) {
       val tmp = merge(l.get.right, r)
       l.get.right = tmp
