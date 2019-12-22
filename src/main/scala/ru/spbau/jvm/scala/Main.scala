@@ -4,6 +4,7 @@ import java.io.{FileNotFoundException, IOException}
 import java.text.SimpleDateFormat
 
 import scala.io.Source
+import scala.util.Using
 
 object Main {
   private val datePattern = "\\d\\d\\.\\d\\d\\.\\d\\d\\d\\d"
@@ -34,16 +35,15 @@ object Main {
         case callsDurationFromRegex(duration) =>
           printCalls(Database.getCallsWithDurationMoreOrEqualTo(duration.toInt))
         case numberRegex(firstName, lastName) =>
-          getNumberByUser(firstName, lastName)
+          printNumberByUser(firstName, lastName)
         case callsRegex(date1, date2) =>
           printCalls(Database.getCallsBetweenDates(dateFromString(date1), dateFromString(date2)))
         case totalRegex(date1, date2) =>
           val total = Database.getTotalBetweenDates(dateFromString(date1), dateFromString(date2))
           println(s"$$$total")
         case "help" =>
-          val help = Source.fromFile(helpPath)
-          help.getLines().foreach(println)
-          help.close
+          Using(Source.fromFile(helpPath)) { file => file.getLines().foreach(println) }
+            .getOrElse(throw new RuntimeException("Error occurred while reading help file."))
         case "stop" => return
         case x => println(s"command $x not found")
       }
@@ -63,7 +63,7 @@ object Main {
     calls.foreach(printCall)
   }
 
-  private def getNumberByUser(firstName : String, lastName : String): Unit = {
+  private def printNumberByUser(firstName: String, lastName: String): Unit = {
     val number = Database.getNumberByName(firstName, lastName)
     number match {
       case None => println("user " + firstName + " " + lastName + " does not exist")
@@ -71,6 +71,5 @@ object Main {
     }
   }
 
-  private def dateFromString(dateString : String) = new SimpleDateFormat("dd.MM.yyyy").parse(dateString)
-
+  private def dateFromString(dateString: String) = new SimpleDateFormat("dd.MM.yyyy").parse(dateString)
 }

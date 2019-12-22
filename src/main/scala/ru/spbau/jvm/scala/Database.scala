@@ -5,6 +5,7 @@ import java.util.Date
 
 import scala.collection.mutable
 import scala.io.Source
+import scala.util.Using
 
 object Database {
 
@@ -62,19 +63,16 @@ object Database {
   }
 
   private def loadNumbers(): Unit = {
-    val numbersTable = Source.fromFile(providedNumbersTablePath)
-    for (line <- numbersTable.getLines) {
+    usingFileLines(providedNumbersTablePath, { line =>
       val splittedLine = line.split(",")
       val id = splittedLine(0).toInt
       val number = splittedLine(1)
       providedNumbers.put(id, number)
-    }
-    numbersTable.close
+    })
   }
 
   private def loadUsers(): Unit = {
-    val userTable = Source.fromFile(userTablePath)
-    for (line <- userTable.getLines) {
+    usingFileLines(userTablePath, { line => {
       val splittedLine = line.split(",")
       val name = splittedLine(0).split(" ")
       val firstName = name(0)
@@ -85,12 +83,11 @@ object Database {
       users.add(user)
       numbersToUsers.put(numberId, user)
     }
-    userTable.close
+    })
   }
 
   private def loadCalls(): Unit = {
-    val callsTable = Source.fromFile(callTablePath)
-    for (line <- callsTable.getLines()) {
+    usingFileLines(callTablePath, { line => {
       val splittedLine = line.split(",")
       val numberId = splittedLine(0).toInt
       val callee = splittedLine(1)
@@ -100,6 +97,10 @@ object Database {
       val user = numbersToUsers.get(numberId).orNull
       calls.add(Call(user, callee, duration, cost, date))
     }
-    callsTable.close
+    })
   }
+
+  private def usingFileLines(path: String, f: String => Unit): Unit = {
+    Using(Source.fromFile(path)) { file => file.getLines().foreach(f) }
+    }.getOrElse(throw new RuntimeException("Error occurred while reading database files."))
 }
