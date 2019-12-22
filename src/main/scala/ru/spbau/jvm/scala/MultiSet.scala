@@ -122,7 +122,7 @@ class MultiSet(private val init: Int*) {
 
   private def insert(value: Int, count: Int): Unit = {
     val (l, r) = split(tree, value)
-    val newNode = Option.apply(new Node(Option.empty[Node], Option.empty[Node], value, count))
+    val newNode = Option.apply(new Node(None, None, value, count))
     tree = merge(merge(l, newNode), r)
     treeSize += count
   }
@@ -138,7 +138,7 @@ class MultiSet(private val init: Int*) {
   private def get(value: Int): Option[Node] = {
     val node = lowerBound(tree, value)
     if (node.isEmpty || node.get.value != value) {
-      Option.empty[Node]
+      None
     } else {
       node
     }
@@ -146,7 +146,7 @@ class MultiSet(private val init: Int*) {
 
   private def lowerBound(t: Option[Node], value: Int): Option[Node] = {
     if (t.isEmpty) {
-      return Option.empty[Node]
+      return None
     }
     if (t.get.value < value) {
       lowerBound(t.get.right, value)
@@ -182,7 +182,7 @@ class MultiSet(private val init: Int*) {
 
   private def split(t: Option[Node], k: Int): (Option[Node], Option[Node]) = {
     if (t.isEmpty) {
-      return (Option.empty[Node], Option.empty[Node])
+      return (None, None)
     }
     if (t.get.value < k) {
       val (l, r) = split(t.get.right, k)
