@@ -6,36 +6,40 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
+private object Database {
+  private final val SEPARATOR = ","
+}
+
 class Database(private val callsFileName: String,
                private val employeesFileName: String) {
 
-  private final val SEPARATOR = ","
   private val calls = new ArrayBuffer[Call]
   private val employeeToPhones = new mutable.HashMap[Employee, Phone]
   private val phoneToEmployee = new mutable.HashMap[Phone, Employee]
 
   load()
 
-  private def loadCalls(): Unit = {
-    val callsFile = Source.fromFile(callsFileName)
+  private def readLines(fileName: String): List[String] = {
+    val file = Source.fromFile(fileName)
+    try file.getLines().toList finally file.close()
+  }
 
-    for (line <- callsFile.getLines) {
-      line.split(SEPARATOR) match {
+  private def loadCalls(): Unit = {
+    val lines = readLines(callsFileName)
+    for (line <- lines) {
+      line.split(Database.SEPARATOR) match {
         case Array(caller, callee, date, duration, cost) =>
           val call = Call(caller, callee, DateTime.parse(date), duration.toInt, cost.toFloat)
           calls.addOne(call)
         case _ => throw new IllegalStateException
       }
     }
-
-    callsFile.close
   }
 
   private def loadEmployees(): Unit = {
-    val employeesFile = Source.fromFile(employeesFileName)
-
-    for (line <- employeesFile.getLines) {
-      line.split(SEPARATOR) match {
+    val lines = readLines(employeesFileName)
+    for (line <- lines) {
+      line.split(Database.SEPARATOR) match {
         case Array(firstName, lastName, phone) =>
           val employee = Employee(firstName, lastName)
           if (phoneToEmployee.contains(phone) || employeeToPhones.contains(employee)) {
@@ -46,8 +50,6 @@ class Database(private val callsFileName: String,
         case _ => throw new IllegalStateException
       }
     }
-
-    employeesFile.close
   }
 
   private def load(): Unit = {
