@@ -14,7 +14,7 @@ object Database {
 
   private val users = mutable.HashSet[User]()
   private val calls = mutable.HashSet[Call]()
-  private val provided_numbers = mutable.HashMap[Int, String]()
+  private val providedNumbers = mutable.HashMap[Int, String]()
   private val numbersToUsers = mutable.HashMap[Int, User]()
 
   def load(): Unit = {
@@ -28,15 +28,15 @@ object Database {
   }
 
   def getCallsWithCostMoreOrEqualTo(cost: Double): List[Call] = {
-    calls.to(LazyList).filter(_.cost >= cost).toList
+    calls.filter(_.cost >= cost).toList
   }
 
   def getCallsWithDurationMoreOrEqualTo(duration: Int): List[Call] = {
-    calls.to(LazyList).filter(_.duration >= duration).toList
+    calls.filter(_.duration >= duration).toList
   }
 
   def getNumberByName(firstName: String, lastName: String): Option[String] = {
-    users.to(LazyList).find(u => u.firstName == firstName && u.lastName == lastName).map(_.number)
+    users.find(u => u.firstName == firstName && u.lastName == lastName).map(_.number)
   }
 
   def getAverageDuration: Double = {
@@ -45,16 +45,16 @@ object Database {
   }
 
   def getCallsBetweenDates(date1: Date, date2: Date): List[Call] = {
-    calls.to(LazyList).filter(_.date.compareTo(date1) >= 0).filter(_.date.compareTo(date2) <= 0).toList
+    calls.filter(_.date.compareTo(date1) >= 0).filter(_.date.compareTo(date2) <= 0).toList
   }
 
   def getTotalBetweenDates(date1: Date, date2: Date): Double = {
-    calls.to(LazyList).filter(_.date.compareTo(date1) >= 0).filter(_.date.compareTo(date2) <= 0)
+    calls.filter(_.date.compareTo(date1) >= 0).filter(_.date.compareTo(date2) <= 0)
       .foldLeft(0.0)((total, cur) => total + cur.cost)
   }
 
   def getMaxSpender: User = {
-    calls.to(LazyList).foldLeft(mutable.Map[User, Double]().withDefaultValue(0)) { (m, c) => {
+    calls.foldLeft(mutable.Map[User, Double]().withDefaultValue(0)) { (m, c) => {
       m(c.user) += c.cost
       m
     }
@@ -67,7 +67,7 @@ object Database {
       val splittedLine = line.split(",")
       val id = splittedLine(0).toInt
       val number = splittedLine(1)
-      provided_numbers.put(id, number)
+      providedNumbers.put(id, number)
     }
     numbersTable.close
   }
@@ -80,7 +80,7 @@ object Database {
       val firstName = name(0)
       val lastName = name(1)
       val numberId = splittedLine(1).toInt
-      val number = provided_numbers.getOrElse(numberId, null)
+      val number = providedNumbers.getOrElse(numberId, null)
       val user = User(firstName, lastName, number)
       users.add(user)
       numbersToUsers.put(numberId, user)
