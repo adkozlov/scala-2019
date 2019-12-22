@@ -19,7 +19,9 @@ class MultiSet(private val init: Int*) {
 
   private var treeSize = 0
   private var tree = Option.empty[Node]
-  fillTree(init.toList)
+  for (x <- init) {
+    add(x)
+  }
 
   /** Returns a new multiset that is an intersection of 2 given multisets */
   def &(that: MultiSet): MultiSet = {
@@ -112,12 +114,6 @@ class MultiSet(private val init: Int*) {
       f(node.value, node.count)
       pairForeach(node.right, f)
     })
-  }
-
-  private def fillTree(init: List[Int]): Unit = {
-    for (x <- init) {
-      add(x)
-    }
   }
 
   private def insert(value: Int, count: Int): Unit = {
