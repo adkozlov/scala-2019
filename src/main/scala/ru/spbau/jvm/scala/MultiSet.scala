@@ -9,10 +9,10 @@ import scala.util.Random
  *
  * @param init elements to build treap with
  */
-class MultiSet(private val init: Int*) {
+class MultiSet[T <: Ordered[T]](private val init: T*) {
   private val generator = new Random(42)
 
-  private class Node(var left: Option[Node], var right: Option[Node], val value: Int,
+  private class Node(var left: Option[Node], var right: Option[Node], val value: T,
                      var count: Int) {
     val y: Int = generator.nextInt()
   }
@@ -24,9 +24,9 @@ class MultiSet(private val init: Int*) {
   }
 
   /** Returns a new multiset that is an intersection of 2 given multisets */
-  def &(that: MultiSet): MultiSet = {
-    val result = new MultiSet()
-    pairForeach(tree, (value: Int, count: Int) => {
+  def &(that: MultiSet[T]): MultiSet[T] = {
+    val result = new MultiSet[T]()
+    pairForeach(tree, (value: T, count: Int) => {
       val minCount = Math.min(count, that.getCount(value))
       if (minCount > 0)
         result.insert(value, minCount)
@@ -35,22 +35,22 @@ class MultiSet(private val init: Int*) {
   }
 
   /** Returns a new multiset that is a union of 2 given multisets */
-  def |(that: MultiSet): MultiSet = {
-    val result = new MultiSet()
+  def |(that: MultiSet[T]): MultiSet[T] = {
+    val result = new MultiSet[T]()
     foreach(value => result.add(value))
     that.foreach(value => result.add(value))
     result
   }
 
   /** Returns a new multiset constructed from the all values of the given multiset with the function applied */
-  def map(f: Int => Int): MultiSet = {
-    val newMultiSet = new MultiSet()
+  def map[V <: Ordered[V]](f: T => V): MultiSet[V] = {
+    val newMultiSet = new MultiSet[V]()
     this.foreach(value => newMultiSet.add(f(value)))
     newMultiSet
   }
 
   /** Applies function to every value in the multiset */
-  def foreach(f: Int => Unit): Unit = {
+  def foreach(f: T => Unit): Unit = {
     foreach(tree, f)
   }
 
@@ -60,12 +60,12 @@ class MultiSet(private val init: Int*) {
   }
 
   /** Returns if the value contains in the multiset */
-  def contains(value: Int): Boolean = {
+  def contains(value: T): Boolean = {
     get(value).nonEmpty
   }
 
   /** Returns how many times the value occurs in the multiset */
-  def getCount(value: Int): Int = {
+  def getCount(value: T): Int = {
     get(value) match {
       case Some(node) => node.count
       case _ => 0
@@ -73,7 +73,7 @@ class MultiSet(private val init: Int*) {
   }
 
   /** Adds one occurrence of the value to the multiset */
-  def add(value: Int): Unit = {
+  def add(value: T): Unit = {
     get(value) match {
       case None => insert(value, 1)
       case Some(node) => node.count += 1
@@ -81,7 +81,7 @@ class MultiSet(private val init: Int*) {
   }
 
   /** Removes one occurrence of the value from the multiset */
-  def remove(value: Int): Unit = {
+  def remove(value: T): Unit = {
     get(value).foreach(node => {
       node.count match {
         case 1 => erase(value)
@@ -92,11 +92,11 @@ class MultiSet(private val init: Int*) {
 
   override def toString: String = {
     val stringJoiner = new StringJoiner(", ", "[", "]")
-    pairForeach(tree, (value: Int, count: Int) => stringJoiner.add(value + " -> " + count))
+    pairForeach(tree, (value: T, count: Int) => stringJoiner.add(value + " -> " + count))
     stringJoiner.toString
   }
 
-  private def foreach(node: Option[Node], f: Int => Unit): Unit = {
+  private def foreach(node: Option[Node], f: T => Unit): Unit = {
     node.foreach(node => {
       foreach(node.left, f)
       for (_ <- 1 to node.count) {
@@ -106,7 +106,7 @@ class MultiSet(private val init: Int*) {
     })
   }
 
-  private def pairForeach(node: Option[Node], f: (Int, Int) => Unit): Unit = {
+  private def pairForeach(node: Option[Node], f: (T, Int) => Unit): Unit = {
     node.foreach(node => {
       pairForeach(node.left, f)
       f(node.value, node.count)
@@ -114,22 +114,44 @@ class MultiSet(private val init: Int*) {
     })
   }
 
-  private def insert(value: Int, count: Int): Unit = {
+  private def insert(value: T, count: Int): Unit = {
     val (l, r) = split(tree, value)
     val newNode = Option.apply(new Node(None, None, value, count))
     tree = merge(merge(l, newNode), r)
     treeSize += count
   }
 
-  private def erase(value: Int): Unit = {
+  private def erase(value: T): Unit = {
     val count = getCount(value)
     val (l, m) = split(tree, value)
-    val (_, r) = split(m, value + 1)
+    val r = removeSmallestKey(m)
     tree = merge(l, r)
     treeSize -= count
   }
 
-  private def get(value: Int): Option[Node] = {
+  private def removeSmallestKey(t: Option[Node]): Option[Node] = {
+    if (t.isEmpty) {
+      return t
+    }
+
+    if (t.get.left.isEmpty) {
+      val tmp = t.get.right
+      t.get.right = None
+      return tmp
+    }
+
+    var node = t
+    var parent = Option.empty[Node]
+    while (node.get.left.nonEmpty) {
+      parent = node
+      node = node.get.left
+    }
+    parent.get.left = node.get.right
+    node.get.right = None
+    t
+  }
+
+  private def get(value: T): Option[Node] = {
     val node = lowerBound(tree, value)
     if (node.isEmpty || node.get.value != value) {
       None
@@ -138,7 +160,7 @@ class MultiSet(private val init: Int*) {
     }
   }
 
-  private def lowerBound(t: Option[Node], value: Int): Option[Node] = {
+  private def lowerBound(t: Option[Node], value: T): Option[Node] = {
     if (t.isEmpty) {
       return None
     }
@@ -171,7 +193,7 @@ class MultiSet(private val init: Int*) {
     }
   }
 
-  private def split(t: Option[Node], k: Int): (Option[Node], Option[Node]) = {
+  private def split(t: Option[Node], k: T): (Option[Node], Option[Node]) = {
     if (t.isEmpty) {
       return (None, None)
     }
