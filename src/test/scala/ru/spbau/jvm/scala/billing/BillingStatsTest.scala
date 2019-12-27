@@ -13,11 +13,11 @@ class BillingStatsTest extends FlatSpec {
   behavior of "BillingStats"
 
   it should "return calls from correctly" in {
-    assert(billingStats.getCalls(date("04.11.2019"), None) == List(
+    assert(billingStats.getCalls(Some("04.11.2019".toDate), None) == List(
       Call(
         Employee("Jazmyn", "Hansen"),
         PhoneNumber("320(45)352-71-41"),
-        dateTime("04.11.2019 03:43:58"),
+        "04.11.2019 03:43:58".toDateTime,
         75,
         0.75
       )
@@ -25,18 +25,18 @@ class BillingStatsTest extends FlatSpec {
   }
 
   it should "return calls from to correctly" in {
-    assert(billingStats.getCalls(date("27.04.2019"), date("27.05.2019")) == List(
+    assert(billingStats.getCalls(Some("27.04.2019".toDate), Some("27.05.2019".toDate)) == List(
       Call(
         Employee("Alton", "Khan"),
         PhoneNumber("03(265)568-07-84"),
-        dateTime("27.04.2019 01:00:53"),
+        "27.04.2019 01:00:53".toDateTime,
         21,
         0.21
       ),
       Call(
         Employee("Ella-May", "Cherry"),
         PhoneNumber("9(9203)020-79-33"),
-        dateTime("18.05.2019 14:36:14"),
+        "18.05.2019 14:36:14".toDateTime,
         666,
         6.66)
     ))
@@ -47,14 +47,14 @@ class BillingStatsTest extends FlatSpec {
       Call(
         Employee("Humera", "Acosta"),
         PhoneNumber("43(4885)700-32-94"),
-        dateTime("10.06.2019 02:07:17"),
+        "10.06.2019 02:07:17".toDateTime,
         92,
         0.92
       ),
       Call(
         Employee("Humera", "Acosta"),
         PhoneNumber("75(5791)483-41-01"),
-        dateTime("03.07.2019 07:11:28"),
+        "03.07.2019 07:11:28".toDateTime,
         248,
         2.48
       )
@@ -66,7 +66,7 @@ class BillingStatsTest extends FlatSpec {
       Call(
         Employee("Ari", "Alfaro"),
         PhoneNumber("0(9158)369-15-27"),
-        dateTime("07.09.2019 18:59:50"),
+        "07.09.2019 18:59:50".toDateTime,
         21,
         0.21
       )
@@ -94,7 +94,7 @@ class BillingStatsTest extends FlatSpec {
   }
 
   it should "count total cost during period correctly" in {
-    assert(billingStats.getTotalCost(date("27.04.2019"), date("27.05.2019")) == 6.87)
+    assert(billingStats.getTotalCost(Some("27.04.2019".toDate), Some("27.05.2019".toDate)) == 6.87)
   }
 
   it should "throw NoSuchElementException if looking for number of non-existing employee" in {
@@ -116,14 +116,4 @@ class BillingStatsTest extends FlatSpec {
 
 object BillingStatsTest {
   private val billingStats = BillingStats(new File(getClass.getResource("/").getPath))
-  private val dateFormat = new SimpleDateFormat("dd.MM.yyyy")
-  private val dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
-
-  private def date(date: String): Option[Date] = {
-    Some(dateFormat.parse(date))
-  }
-
-  private def dateTime(date: String): Date = {
-    dateTimeFormat.parse(date)
-  }
 }

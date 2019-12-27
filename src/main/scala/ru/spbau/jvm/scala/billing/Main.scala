@@ -50,7 +50,6 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val stats = BillingStats(new File("resources"))
-    val dateFormat = new SimpleDateFormat(DATE_FORMAT)
     var toExit = false
 
     print(HELP_MESSAGE)
@@ -58,11 +57,11 @@ object Main {
       val line = StdIn.readLine()
       line match {
         case callsFromToPattern(from, to) =>
-          printCalls(stats.getCalls(Some(dateFormat.parse(from)), Some(dateFormat.parse(to))))
+          printCalls(stats.getCalls(Some(from.toDate), Some(to.toDate)))
         case callsFromPattern(from) =>
-          printCalls(stats.getCalls(Some(dateFormat.parse(from)), None))
+          printCalls(stats.getCalls(Some(from.toDate), None))
         case callsToPattern(to) =>
-          printCalls(stats.getCalls(None, Some(dateFormat.parse(to))))
+          printCalls(stats.getCalls(None, Some(to.toDate)))
         case callsPattern() =>
           printCalls(stats.getCalls(None, None))
         case incomingCallsPattern(firstName, lastName) =>
@@ -82,11 +81,11 @@ object Main {
         case avgPattern() =>
           println(s"${stats.getAverageDuration}s")
         case totalFromToPattern(from, to) =>
-          println(s"$$${stats.getTotalCost(Some(dateFormat.parse(from)), Some(dateFormat.parse(to)))}")
+          println(s"$$${stats.getTotalCost(Some(from.toDate), Some(to.toDate))}")
         case totalFromPattern(from) =>
-          println(s"$$${stats.getTotalCost(Some(dateFormat.parse(from)), None)}")
+          println(s"$$${stats.getTotalCost(Some(from.toDate), None)}")
         case totalToPattern(to) =>
-          println(s"$$${stats.getTotalCost(None, Some(dateFormat.parse(to)))}")
+          println(s"$$${stats.getTotalCost(None, Some(to.toDate))}")
         case totalPattern() =>
           println(s"$$${stats.getTotalCost(None, None)}")
         case numberPattern(firstName, lastName) =>

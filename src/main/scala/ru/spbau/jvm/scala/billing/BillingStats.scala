@@ -68,7 +68,7 @@ object BillingStats {
     }
     val callRecords = readRecords(new File(folder, CALLS_FILE)) {
       case Array(callerNumber, calleeNumber, time, duration, cost) =>
-        CallRecord(callerNumber, calleeNumber, time, duration.toLong, BigDecimal(cost))
+        CallRecord(callerNumber, calleeNumber, time.toDateTime, duration.toLong, BigDecimal(cost))
     }
 
     val idToNumber = phoneNumberRecords.map(r => (r.id, PhoneNumber(r.number))).toMap
@@ -88,7 +88,7 @@ object BillingStats {
         c => Call(
           numberToEmployee(PhoneNumber(c.callerPhoneNumber)).get,
           PhoneNumber(c.calleePhoneNumber),
-          dateTimeFormat.parse(c.time),
+          c.time,
           c.duration,
           c.cost
         )
